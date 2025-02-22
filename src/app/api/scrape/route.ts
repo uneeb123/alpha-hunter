@@ -8,13 +8,13 @@ const debug = Debugger.create({
   level: (process.env.DEBUG_LEVEL as 'info' | 'verbose' | 'error') || 'info',
 });
 
-export const runtime = 'edge'; // Add edge runtime for better performance
-export const dynamic = 'force-dynamic'; // Ensure the route is not cached
+// export const runtime = 'edge'; // Add edge runtime for better performance
+// export const dynamic = 'force-dynamic'; // Ensure the route is not cached
 
 // Configure the route as a Vercel Cron Job
-export const config = {
-  maxDuration: 300, // 5 minutes timeout
-};
+// export const config = {
+//   maxDuration: 300, // 5 minutes timeout
+// };
 
 export async function GET() {
   try {
