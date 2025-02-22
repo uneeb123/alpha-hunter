@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Scripts
 
-## Getting Started
+## Create users and alpha
 
-First, run the development server:
+Read the information from `src/scripts/users.json` and updates the tables
+Operation is idempotent
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+pnpm bulk-add-users -d verbose
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scrape
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Can be run multiple times without issues
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+pnpm scrape
+pnpm scrape --debug verbose --loop
+pnpm scrape -d verbose
 
-## Learn More
+## Extract
 
-To learn more about Next.js, take a look at the following resources:
+pnpm extract --alpha KAITO --debug verbose
+pnpm extract -a KAITO -d verbose --dry-run
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Workflow
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+There are two major sequence of operations that need to happen. First we get data from Twitter using their API. But because their API has limits, we need to constantly call their API and retry and save the results in a Database.
 
-## Deploy on Vercel
+## Workflow 1: Data gathering
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+There is only one step here fetch timeline for every user
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Keep running it in a loop
+
+## Workflow 2: Finding Alpha
+
+We take the fetched timeline and convert it to processed tweets.
+After getting the process tweets, we convert the tweets to a book like format. Then we run a couple of different things on it.
+
+- Summarizer to tweet generate content for tweet
+- Create audio for podcast which in turn is used for creating video content for a podcast
+
+### Schema
+
+User
+
+- TwitterID
+- TwitterName
+- TwitterUser
+
+Alpha
+
+- Name
+- Users
+
+Scraper
+
+- Status (STARTED, PAUSED, FINISHED)
+- WhenToResume?
+- StartTime
+- EndTime
+
+ScraperUser
+
+- ID
+- ScrapperID
+- UserID
+- LastFetchedTweetID
+- ScrapedFilePath?
+
+Processor
+
+- ID
+- Alpha
+- ProcessedFilePath
+- CreatedAt
+
+ProcessorUser
+
+- UserID
+- ProcessorID
+- FirstProcessedTweetID
+- LastProcessedTweetID
+
+Queries
+
+- What is the last scrapped Tweet ID for a user?
+- What is the last processed Tweet ID for a user?
+- Fetch all the new tweets since processed ID?

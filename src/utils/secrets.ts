@@ -1,0 +1,73 @@
+export interface Secrets {
+  twitterApiKey: string;
+  twitterApiSecret: string;
+  twitterAccessToken: string;
+  twitterAccessSecret: string;
+  anthropicApiKey: string;
+  elevenLabsApiKey: string;
+  awsRegion: string;
+  awsBucketName: string;
+}
+
+class SecretsManager {
+  private static instance: SecretsManager;
+  private secrets: Secrets;
+
+  private constructor() {
+    const {
+      TWITTER_API_KEY,
+      TWITTER_API_SECRET_KEY,
+      TWITTER_ACCESS_TOKEN,
+      TWITTER_ACCESS_TOKEN_SECRET,
+      ANTHROPIC_API_KEY,
+      ELEVENLABS_API_KEY,
+      AWS_REGION,
+      AWS_BUCKET_NAME,
+    } = process.env;
+
+    // Validate all required secrets are present
+    const missingSecrets = [
+      ['TWITTER_API_KEY', TWITTER_API_KEY],
+      ['TWITTER_API_SECRET_KEY', TWITTER_API_SECRET_KEY],
+      ['TWITTER_ACCESS_TOKEN', TWITTER_ACCESS_TOKEN],
+      ['TWITTER_ACCESS_TOKEN_SECRET', TWITTER_ACCESS_TOKEN_SECRET],
+      ['ANTHROPIC_API_KEY', ANTHROPIC_API_KEY],
+      ['ELEVENLABS_API_KEY', ELEVENLABS_API_KEY],
+      ['AWS_REGION', AWS_REGION],
+      ['AWS_BUCKET_NAME', AWS_BUCKET_NAME],
+    ].filter(([, value]) => !value);
+
+    if (missingSecrets.length > 0) {
+      throw new Error(
+        `Missing required environment variables: ${missingSecrets
+          .map(([key]) => key)
+          .join(', ')}`,
+      );
+    }
+
+    this.secrets = {
+      twitterApiKey: TWITTER_API_KEY!,
+      twitterApiSecret: TWITTER_API_SECRET_KEY!,
+      twitterAccessToken: TWITTER_ACCESS_TOKEN!,
+      twitterAccessSecret: TWITTER_ACCESS_TOKEN_SECRET!,
+      anthropicApiKey: ANTHROPIC_API_KEY!,
+      elevenLabsApiKey: ELEVENLABS_API_KEY!,
+      awsRegion: AWS_REGION!,
+      awsBucketName: AWS_BUCKET_NAME!,
+    };
+  }
+
+  public static getInstance(): SecretsManager {
+    if (!SecretsManager.instance) {
+      SecretsManager.instance = new SecretsManager();
+    }
+    return SecretsManager.instance;
+  }
+
+  public getSecrets(): Secrets {
+    return this.secrets;
+  }
+}
+
+export const getSecrets = (): Secrets =>
+  SecretsManager.getInstance().getSecrets();

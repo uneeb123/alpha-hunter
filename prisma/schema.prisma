@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          Int             @id @default(autoincrement())
+  twitterId   String          @unique
+  twitterName String
+  twitterUser String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  alphas      Alpha[]         @relation("AlphaToUser")
+  scrapers    ScraperToUser[]
+}
+
+model Alpha {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  users      User[]      @relation("AlphaToUser")
+  processors Processor[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+enum ScraperStatus {
+  RUNNING
+  PAUSED
+  FINISHED
+  FAILED
+}
+
+model Scraper {
+  id         Int             @id @default(autoincrement())
+  status     ScraperStatus   @default(RUNNING)
+  startTime  DateTime        @default(now())
+  endTime    DateTime?
+  resumeTime DateTime?
+  users      ScraperToUser[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  previousId Int?            @unique
+  previous   Scraper?        @relation("ScraperHistory", fields: [previousId], references: [id])
+  next       Scraper?        @relation("ScraperHistory")
+}
+
+model ScraperToUser {
+  user               User      @relation(fields: [userId], references: [id])
+  userId             Int
+  scraper            Scraper   @relation(fields: [scraperId], references: [id])
+  scraperId          Int
+  filePath           String?
+  lastFetchedTweetId String?
+  earliestTweetTime  DateTime?
+  skipped            Boolean
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@id([userId, scraperId])
+}
+
+model Processor {
+  id               Int      @id @default(autoincrement())
+  alpha            Alpha    @relation(fields: [alphaId], references: [id])
+  alphaId          Int
+  generatedScript  String?  @db.Text
+  summary          String?  @db.Text
+  tweetUrl         String?
+  parsedTweetsPath String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
