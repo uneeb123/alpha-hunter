@@ -10,11 +10,8 @@ const debug = Debugger.create({
 
 // export const runtime = 'edge'; // Add edge runtime for better performance
 export const dynamic = 'force-dynamic'; // Ensure the route is not cached
-
-// Configure the route as a Vercel Cron Job
-export const config = {
-  maxDuration: 300, // 5 minutes timeout
-};
+// 5 minutes timeout
+export const maxDuration = 300;
 
 export async function GET() {
   try {
