@@ -41,6 +41,14 @@ export async function GET() {
     });
 
     if (staleScraper) {
+      // First delete related records in ScraperToUser
+      await prisma.scraperToUser.deleteMany({
+        where: {
+          scraperId: staleScraper.id,
+        },
+      });
+
+      // Then delete the scraper
       await prisma.scraper.delete({
         where: {
           id: staleScraper.id,
