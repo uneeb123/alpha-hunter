@@ -30,7 +30,10 @@ pnpm extract --alpha GENERAL --telegram --langchain
 
 ## To run test scripts
 
+```
 npx tsx src/scripts/test/twitter.ts
+npx tsx src/scripts/test/telegram.ts
+```
 
 # Workflow
 
