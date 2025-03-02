@@ -13,16 +13,20 @@ pnpm bulk-add-users -d verbose
 
 Can be run multiple times without issues
 
+```
 pnpm scrape
 pnpm scrape --debug verbose --loop
 pnpm scrape -d verbose
+```
 
 ## Extract
 
+```
 pnpm extract --alpha KAITO --debug verbose
 pnpm extract -a KAITO -d verbose --dry-run
 pnpm extract --alpha GENERAL --telegram
 pnpm extract --alpha GENERAL --telegram --langchain
+```
 
 ## To run test scripts
 
