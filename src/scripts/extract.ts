@@ -13,6 +13,8 @@ program
   .option('-a, --alpha <type>', 'Alpha (AI_AGENTS or KAITO)', 'AI_AGENTS')
   .option('-d, --debug [level]', 'Debug level (info or verbose)', 'info')
   .option('--dry-run', 'Run without posting to Twitter', false)
+  .option('--telegram', 'Post summary to Telegram', false)
+  .option('--langchain', 'Use Langchain for agentic capabilities', false)
   .parse(process.argv);
 
 const options = program.opts();
@@ -28,6 +30,8 @@ export const main = async (): Promise<void> => {
   debug.info(`Dry run: ${options.dryRun}`);
   debug.info(`Debug level: ${options.debug}`);
   debug.info(`Alpha: ${options.alpha}`);
+  debug.info(`Post to Telegram: ${options.telegram}`);
+  debug.info(`Use Langchain: ${options.langchain}`);
 
   try {
     const prisma = new PrismaClient();
@@ -44,7 +48,7 @@ export const main = async (): Promise<void> => {
       throw new Error(`No alpha found matching ${options.alpha} in database`);
     }
 
-    await processWorkflow(alphaRecord.id, options.dryRun, 24);
+    await processWorkflow(alphaRecord.id, options.dryRun, 24, options.telegram, options.langchain);
     await prisma.$disconnect();
   } catch (error) {
     debug.error(`Failed to complete workflow: ${error}`);

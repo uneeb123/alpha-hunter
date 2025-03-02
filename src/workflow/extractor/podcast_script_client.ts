@@ -1,32 +1,80 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { generateText as aiGenerateText } from 'ai';
 
-/*
-TODO: sometimes it spits out out-dated news. For instance, it said this: 0G Labs Secures $325M for Decentralized AI Infrastructure
-Which was a news from Nov 2024
- */
+// TODO: do we need focus area/alpha since it's coming from the summary
 export const generatePodcastScript = async (
   apiKey: string,
-  news: string,
+  tweets: string,
+  relevantTopics: string,
   alpha: string,
+  pastTopics: string,
 ) => {
   const anthropic = createAnthropic({
     apiKey,
   });
 
-  // Customize context based on alpha type
-  const alphaSpecificContext = getAlphaContext(alpha);
-  const context =
-    alphaSpecificContext +
-    background +
-    `\n\n` +
-    `\n\n# News\n\n` +
-    news +
-    instructions;
+  let focusArea = ``;
+  if (alpha === 'AI_AGENTS') {
+    focusArea += `AI Agents`;
+  } else if (alpha === 'KAITO') {
+    focusArea += `Kaito ecosystem.`;
+  } else if (alpha === 'GENERAL') {
+    focusArea += `None`;
+  }
+
+  const system = `You are a podcast script generator of a Crypto meets AI podcast show called Genkless.
+Genkless focuses on educating and empowering individuals to navigate the crypto landscape.
+There are three speakers involved: Max Profit, Dabid Hoffbro and Ryan Seen Adz.
+
+# Instructions
+
+- The script should cover all the topics provided in the "Relevant Topics" section
+- The characters information is provided in the "Character" section, make sure the script is relevant to the characters
+- Check the "Tweets" section and extrapolate information from there to get contents for the scripts
+- Check "Past Topics" section to know which topics have already been covered and should be avoided
+- Check the "Script Directions" section for the style and tone of the script content
+- Don't say 'Here's a news script', just share the script
+- No music effects or laughs, just words of what the speakers will say`;
+
+  const task = `Write a script for podcast Genkless based on the News.`;
+
+  const characters = `## Max Profit
+Max is an AI agent is the expert guest on the podcast.
+He works at a hedge fund and is never wrong about the bets he makes.
+Max Profit has all the insights and updates.
+
+## Dabid Hoffbro
+Dabid Hoffbro is the co-founder and host of Genkless.
+Dabid is great at asking questions and breaking things down simply.
+
+## Ryan Seen Adz
+Ryan Seen Adz is the co-founder and host of Genkless.
+Ryan is great at asking questions and breaking things down simply.`;
+
+  const scriptDirections = `\
+- Engaging and well-structured podcast episode.
+- The podcast should have a natural flow, a strong introduction, engaging discussions, and a conclusion that 
+leaves listeners with key takeaways. Keep the tone aligned with the target audience, whether it's casual, 
+professional, humorous, or thought-provoking.
+- Ensure logical coherence, smooth transitions, and a compelling storytelling approach.
+- The host should be inquisitive and the guest should share insights
+- The host can challenge the guest to get more clarity
+- Use plain American English Language
+- Add humor wherever possible`;
+
+  const prompt =
+    `# Task: ${task}\n\n` +
+    `\n\n# Relevant Topics\n\n${relevantTopics}\n\n` +
+    `\n\n# Past Topics\n\n${pastTopics}\n\n` +
+    `\n\n# Characters\n\n${characters}\n\n` +
+    `\n\n# Script Directions\n\n${scriptDirections}\n\n` +
+    `\n\n# Focus Area\n\n$${focusArea}\n\n` +
+    `\n\n# Tweets\n\n${tweets}\n\n` +
+    `\n\n# Example\n\n${example}`;
 
   const { text: anthropicResponse } = await aiGenerateText({
     model: anthropic.languageModel('claude-3-5-sonnet-20241022'),
-    prompt: context,
+    prompt,
     system,
     temperature: 0.7,
     maxTokens: 8192,
@@ -37,60 +85,7 @@ export const generatePodcastScript = async (
   return anthropicResponse;
 };
 
-const getAlphaContext = (alpha: string) => {
-  switch (alpha) {
-    case 'AI_AGENTS':
-      return `# Focus Area
-This episode focuses on AI agents, AI agent launchpads, and similar products. 
-The discussion should emphasize developments in AI agent launchpads, agent capabilities, and their impact on crypto.\n\n`;
-
-    case 'KAITO':
-      return `# Focus Area
-This episode focuses on Kaito ecosystem developments, role of InfoFi, and extracting insights. 
-The discussion should emphasize on leveraging alpha from Kaito and how listeners should adjust their trading strategies.\n\n`;
-
-    default:
-      return '';
-  }
-};
-
-const system = `You are a podcast script generator of a Crypto meets AI podcast show called Genkless. 
-There are three speakers involved: Max Profit, Dabid Hoffbro and Ryan Seen Adz. 
-Dabid Hoffbro and Ryan Seen Adz are great at asking questions and breaking things down simply 
-whereas Max Profit has all the insights and updates.
-
-Your goal is to create engaging, engaging, and well-structured podcast episode based on the news which will be provided. 
-The podcast should have a natural flow, a strong introduction, engaging discussions, and a conclusion that 
-leaves listeners with key takeaways. Keep the tone aligned with the target audience, whether it's casual, 
-professional, humorous, or thought-provoking. Ensure logical coherence, smooth transitions, 
-and a compelling storytelling approach.
-
-# About Max Profit
-Max is an AI agent that was brought to life. He works at a hedge fund and never wrong about the bets he makes
-
-# About Dabid Hoffbro
-Dabid Hoffbro is the Co-founder and host of Genkless, a cryptocurrency media brand and community that 
-focuses on educating and empowering individuals to navigate the decentralized financial landscape.
-
-# About Ryan Seen Adz
-Ryan Seen Adz is a Co-founder of Genkless, a cryptocurrency media brand and community that focuses on 
-educating and empowering individuals to navigate the decentralized financial landscape.`;
-
-const background = `# Script Directions
-
-- No music effects or laughs, just words of what the speakers will say
-- Don't say 'Here's a news script', just share the script
-- Your tone should be inquisitive
-- Cover 3 topics at most
-- Prioritize news with most views
-- For each topic, craft a story and leave with a interesting thought
-- Keep discussion relevant to AI and Crypto
-- Use plain American English Language
-- Add humor wherever possible
-
-# Example
-
-Dabid Hoffbro: Welcome back to another episode of Genkless, where we break down the intersection of AI and crypto. I'm your host Dabid Hoffbro, joined by my co-host Ryan Seen Adz and our resident AI trading expert, Max Profit. Today, we've got some exciting developments to discuss in the AI-crypto space.
+const example = `\Dabid Hoffbro: Welcome back to another episode of Genkless, where we break down the intersection of AI and crypto. I'm your host Dabid Hoffbro, joined by my co-host Ryan Seen Adz and our resident AI trading expert, Max Profit. Today, we've got some exciting developments to discuss in the AI-crypto space.
 
 Ryan Seen Adz: That's right, Dabid. The AI sector is showing strong signs of recovery, and we've got some fascinating stories to unpack. Max, what's catching your attention in the markets?
 
@@ -129,6 +124,3 @@ Ryan Seen Adz: That's both exciting and slightly terrifying!
 Dabid Hoffbro: And on that dystopian note, we'll wrap up today's episode! Thanks for joining us on Genkless. Remember to like, subscribe, and let us know your thoughts on these developments in the comments below.
 
 Ryan Seen Adz: And remember, not financial advice, but definitely financial entertainment!`;
-
-const instructions = `# Instructions: Write a script for podcast Genkless based on the News.
-Response format should be formatted as a text`;

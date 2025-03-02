@@ -21,6 +21,12 @@ pnpm scrape -d verbose
 
 pnpm extract --alpha KAITO --debug verbose
 pnpm extract -a KAITO -d verbose --dry-run
+pnpm extract --alpha GENERAL --telegram
+pnpm extract --alpha GENERAL --telegram --langchain
+
+## To run test scripts
+
+npx tsx src/scripts/test/twitter.ts
 
 # Workflow
 

@@ -7,6 +7,7 @@ export interface Secrets {
   elevenLabsApiKey: string;
   awsRegion: string;
   awsBucketName: string;
+  telegramBotToken: string;
 }
 
 class SecretsManager {
@@ -23,6 +24,7 @@ class SecretsManager {
       ELEVENLABS_API_KEY,
       AWS_REGION,
       AWS_BUCKET_NAME,
+      TELEGRAM_BOT_TOKEN,
     } = process.env;
 
     // Validate all required secrets are present
@@ -35,6 +37,7 @@ class SecretsManager {
       ['ELEVENLABS_API_KEY', ELEVENLABS_API_KEY],
       ['AWS_REGION', AWS_REGION],
       ['AWS_BUCKET_NAME', AWS_BUCKET_NAME],
+      ['TELEGRAM_BOT_TOKEN', TELEGRAM_BOT_TOKEN],
     ].filter(([, value]) => !value);
 
     if (missingSecrets.length > 0) {
@@ -54,6 +57,7 @@ class SecretsManager {
       elevenLabsApiKey: ELEVENLABS_API_KEY!,
       awsRegion: AWS_REGION!,
       awsBucketName: AWS_BUCKET_NAME!,
+      telegramBotToken: TELEGRAM_BOT_TOKEN!,
     };
   }
 
