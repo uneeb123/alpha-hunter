@@ -16,22 +16,22 @@ const debug = Debugger.create(debugConfig);
 const main = async (): Promise<void> => {
   try {
     debug.info('Starting Telegram test');
-    
+
     // Get secrets
     const secrets = getSecrets();
-    
+
     // Create telegram client
     const telegramClient = new TelegramClient(secrets.telegramBotToken);
-    
+
     // Send test message
     const testMessage = 'Hello World from Alpha Hunter! 🚀';
     debug.info(`Sending test message: "${testMessage}"`);
-    
+
     await telegramClient.sendSummary(testMessage);
-    
+
     debug.info('Test message sent successfully');
   } catch (error) {
-    debug.error('Error sending test message:', error);
+    debug.error('Error sending test message:', error as Error);
     process.exit(1);
   }
 };
