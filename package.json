@@ -2,6 +2,9 @@
   "name": "alpha-hunter",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev --turbopack",
@@ -11,6 +14,7 @@
     "format:check": "prettier --check src",
     "lint": "next lint",
     "bulk-add-users": "tsx src/scripts/bulk_add_users.ts",
+    "delete-all": "tsx src/scripts/delete_users_scrapers.ts --all",
     "scrape": "tsx src/scripts/scrape.ts",
     "extract": "tsx src/scripts/extract.ts"
   },
@@ -23,15 +27,18 @@
     "@langchain/openai": "^0.0.14",
     "@prisma/client": "^6.4.0",
     "ai": "^4.1.41",
+    "chromadb": "^1.9.1",
     "elevenlabs": "^1.51.0",
     "fluent-ffmpeg": "^2.1.3",
+    "hnswlib-node": "^1.4.2",
     "langchain": "^0.1.25",
     "next": "15.1.7",
     "prisma": "^6.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "telegraf": "^4.16.3",
-    "twitter-api-v2": "^1.20.1"
+    "twitter-api-v2": "^1.20.1",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -9,6 +9,12 @@ Operation is idempotent
 pnpm bulk-add-users -d verbose
 ```
 
+## Delete all scrapers and users
+
+```
+pnpm delete-all
+```
+
 ## Scrape
 
 Can be run multiple times without issues

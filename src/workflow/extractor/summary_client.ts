@@ -35,7 +35,7 @@ Your content never includes past topics. If focus area is provided, then keep up
     focusArea += `None`;
   }
 
-  const task = `Generate an article from the provided News for the character Max Profit.`;
+  const task = `Generate headlines of the news from the provided Tweets for the character Max Profit.`;
 
   const example = `1. Kava launched the largest decentralized AI model on Feb 28, 2025, advancing blockchain technology.
 2. Crypto scam revenue reached $9.9B-$12.4B in 2024, fueled by AI-driven fraud like romance scams.

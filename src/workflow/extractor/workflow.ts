@@ -21,6 +21,7 @@ export async function processWorkflow(
   hours: number,
   telegramEnabled: boolean = false,
   useLangchain: boolean = false,
+  generatePodcast: boolean = false,
 ): Promise<void> {
   const debug = Debugger.getInstance();
   const secrets = getSecrets();
@@ -63,26 +64,24 @@ export async function processWorkflow(
   let summary;
   if (useLangchain) {
     // Optional: Add tweet analysis with Langchain
-    if (useLangchain) {
-      debug.info('Analyzing tweets with Langchain agent');
-      const tweetAnalyzerAgent = AgentFactory.createTweetAnalyzerAgent(
-        secrets.anthropicApiKey,
+    debug.info('Analyzing tweets with Langchain agent');
+    const tweetAnalyzerAgent = AgentFactory.createTweetAnalyzerAgent(
+      secrets.anthropicApiKey,
+    );
+    const tweetContents = contents.split('\n\n');
+    const interests = ['AI', 'DeFi', 'NFT', 'Layer2', 'Regulation'];
+    try {
+      const analysisResults = await tweetAnalyzerAgent.analyzeTweets(
+        tweetContents,
+        interests,
       );
-      const tweetContents = contents.split('\n\n');
-      const interests = ['AI', 'DeFi', 'NFT', 'Layer2', 'Regulation'];
-      try {
-        const analysisResults = await tweetAnalyzerAgent.analyzeTweets(
-          tweetContents,
-          interests,
-        );
-        debug.verbose(
-          'Tweet analysis results:',
-          JSON.stringify(analysisResults, null, 2),
-        );
-      } catch (error) {
-        debug.error('Tweet analysis failed:', error as Error);
-        // Continue execution even if analysis fails
-      }
+      debug.verbose(
+        'Tweet analysis results:',
+        JSON.stringify(analysisResults, null, 2),
+      );
+    } catch (error) {
+      debug.error('Tweet analysis failed:', error as Error);
+      // Continue execution even if analysis fails
     }
 
     summary = await generateSummaryLangchain(
@@ -90,8 +89,10 @@ export async function processWorkflow(
       contents,
       alpha.name,
       pastTopics,
+      alpha.id,
+      processor.id.toString(),
     );
-    debug.info('Generated summary using Langchain');
+    debug.info('Generated summary using Langchain with vector store');
   } else {
     summary = await generateSummaryVanilla(
       secrets.anthropicApiKey,
@@ -109,44 +110,46 @@ export async function processWorkflow(
   });
   debug.info('Updated processor with summary');
 
-  let script;
-  if (useLangchain) {
-    script = await generatePodcastScriptLangchain(
-      secrets.anthropicApiKey,
-      contents,
-      summary,
-      alpha.name,
-      pastTopics,
+  if (generatePodcast) {
+    let script;
+    if (useLangchain) {
+      script = await generatePodcastScriptLangchain(
+        secrets.anthropicApiKey,
+        contents,
+        summary,
+        alpha.name,
+        pastTopics,
+      );
+      debug.info('Generated podcast script using Langchain');
+    } else {
+      script = await generatePodcastScriptVanilla(
+        secrets.anthropicApiKey,
+        contents,
+        summary,
+        alpha.name,
+        pastTopics,
+      );
+      debug.info('Generated podcast script using vanilla LLM');
+    }
+    debug.verbose(script);
+
+    await prisma.processor.update({
+      where: { id: processor.id },
+      data: { generatedScript: script },
+    });
+    debug.info('Updated processor with generated script');
+
+    const lines = await generatePodcastAudio(
+      secrets.elevenLabsApiKey,
+      script,
+      processor.id,
     );
-    debug.info('Generated podcast script using Langchain');
-  } else {
-    script = await generatePodcastScriptVanilla(
-      secrets.anthropicApiKey,
-      contents,
-      summary,
-      alpha.name,
-      pastTopics,
-    );
-    debug.info('Generated podcast script using vanilla LLM');
+    debug.info('Generated podcast audio');
+    debug.verbose(lines);
+
+    await generatePodcastVideo(processor.id, lines);
+    debug.info('Generated podcast video');
   }
-  debug.verbose(script);
-
-  await prisma.processor.update({
-    where: { id: processor.id },
-    data: { generatedScript: script },
-  });
-  debug.info('Updated processor with generated script');
-
-  const lines = await generatePodcastAudio(
-    secrets.elevenLabsApiKey,
-    script,
-    processor.id,
-  );
-  debug.info('Generated podcast audio');
-  debug.verbose(lines);
-
-  await generatePodcastVideo(processor.id, lines);
-  debug.info('Generated podcast video');
 
   if (!dryRun) {
     debug.info('Posting to Twitter');
@@ -156,9 +159,20 @@ export async function processWorkflow(
       secrets.twitterAccessToken,
       secrets.twitterAccessSecret,
     );
-    await tweetsManager.postTweetWithMedia(processor.id, summary);
+
+    if (generatePodcast) {
+      // Post with media if podcast was generated
+      await tweetsManager.postTweetWithMedia(processor.id, summary);
+      debug.info('Posted tweet with podcast media');
+    } else {
+      // Post text-only tweet if no podcast
+      await tweetsManager.postTweet(summary);
+      debug.info('Posted text-only tweet');
+    }
   } else {
     debug.info('Skipping Twitter post (dry run)');
+    debug.info('Summary that would be posted:');
+    console.log(summary);
   }
 
   // Post to Telegram if enabled

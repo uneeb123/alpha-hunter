@@ -5,6 +5,7 @@ export interface Secrets {
   twitterAccessSecret: string;
   anthropicApiKey: string;
   elevenLabsApiKey: string;
+  openaiApiKey: string;
   awsRegion: string;
   awsBucketName: string;
   telegramBotToken: string;
@@ -22,6 +23,7 @@ class SecretsManager {
       TWITTER_ACCESS_TOKEN_SECRET,
       ANTHROPIC_API_KEY,
       ELEVENLABS_API_KEY,
+      OPENAI_API_KEY,
       AWS_REGION,
       AWS_BUCKET_NAME,
       TELEGRAM_BOT_TOKEN,
@@ -38,6 +40,7 @@ class SecretsManager {
       ['AWS_REGION', AWS_REGION],
       ['AWS_BUCKET_NAME', AWS_BUCKET_NAME],
       ['TELEGRAM_BOT_TOKEN', TELEGRAM_BOT_TOKEN],
+      // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
     if (missingSecrets.length > 0) {
@@ -55,6 +58,7 @@ class SecretsManager {
       twitterAccessSecret: TWITTER_ACCESS_TOKEN_SECRET!,
       anthropicApiKey: ANTHROPIC_API_KEY!,
       elevenLabsApiKey: ELEVENLABS_API_KEY!,
+      openaiApiKey: OPENAI_API_KEY || '', // Optional, used for vector embeddings
       awsRegion: AWS_REGION!,
       awsBucketName: AWS_BUCKET_NAME!,
       telegramBotToken: TELEGRAM_BOT_TOKEN!,
