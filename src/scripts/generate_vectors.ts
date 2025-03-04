@@ -28,16 +28,16 @@ export const main = async (): Promise<void> => {
 
   try {
     const secrets = getSecrets();
-    
+
     // Check if OpenAI API key is available
     if (!secrets.openaiApiKey) {
       debug.error('OpenAI API key is required for generating vectors');
       process.exit(1);
     }
-    
+
     const prisma = new PrismaClient();
     const vectorStore = VectorStore.getInstance(secrets.openaiApiKey);
-    
+
     // Get all processors with summaries
     const processors = await prisma.processor.findMany({
       where: {
@@ -49,27 +49,32 @@ export const main = async (): Promise<void> => {
         alpha: true,
       },
     });
-    
+
     debug.info(`Found ${processors.length} summaries to process`);
-    
+
     // Process each summary and add to vector store
     for (const processor of processors) {
       if (!processor.summary) continue;
-      
+
       try {
         await vectorStore.addSummary(
           processor.summary,
           processor.alphaId,
           processor.id.toString(),
-          processor.createdAt
+          processor.createdAt,
         );
-        
-        debug.info(`Added summary from processor ${processor.id} to vector store`);
+
+        debug.info(
+          `Added summary from processor ${processor.id} to vector store`,
+        );
       } catch (error) {
-        debug.error(`Failed to add summary from processor ${processor.id} to vector store:`, error as Error);
+        debug.error(
+          `Failed to add summary from processor ${processor.id} to vector store:`,
+          error as Error,
+        );
       }
     }
-    
+
     debug.info('Finished generating vectors from existing summaries');
     await prisma.$disconnect();
   } catch (error) {
