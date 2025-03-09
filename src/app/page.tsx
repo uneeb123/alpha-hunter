@@ -34,6 +34,9 @@ const formatDate = (date: Date | null | undefined) => {
   return new Date(date).toLocaleString();
 };
 
+// Add this export to prevent caching
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const { alphas, scrapers } = await getData();
 

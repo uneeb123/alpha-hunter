@@ -115,9 +115,8 @@ export class VectorStore {
     k: number = 5,
   ): Promise<Document[]> {
     try {
-      const results = await this.vectorStore.similaritySearch(query, k, {
-        type: 'summary',
-      });
+      const filter = (doc: Document) => doc.metadata?.type === 'summary';
+      const results = await this.vectorStore.similaritySearch(query, k, filter);
       this.debug.info(`Found ${results.length} similar documents`);
       return results;
     } catch (error) {
@@ -189,16 +188,30 @@ Are these summaries talking about the same news items or topics? Answer with jus
       } else if (this.vectorStore instanceof MemoryVectorStore) {
         // For memory store, we can access the documents directly
         const memoryStore = this.vectorStore as MemoryVectorStore;
-        const documents = memoryStore.memoryVectors;
 
-        return documents
-          .filter((doc) => doc.metadata?.type === 'summary')
-          .map((doc) => ({
-            content: doc.content,
-            alphaId: doc.metadata.alphaId,
-            processorId: doc.metadata.processorId,
-            timestamp: doc.metadata.timestamp,
-          }));
+        // Add debug logging to see the structure
+        this.debug.info(
+          `Memory vectors length: ${memoryStore.memoryVectors.length}`,
+        );
+        if (memoryStore.memoryVectors.length > 0) {
+          this.debug.info(
+            `First memory vector keys: ${Object.keys(memoryStore.memoryVectors[0]).join(', ')}`,
+          );
+        }
+
+        // Try to access documents through the proper API instead
+        const results = await this.vectorStore.similaritySearch(
+          '',
+          1000,
+          (doc) => doc.metadata?.type === 'summary',
+        );
+
+        return results.map((doc) => ({
+          content: doc.pageContent,
+          alphaId: doc.metadata.alphaId,
+          processorId: doc.metadata.processorId,
+          timestamp: doc.metadata.timestamp,
+        }));
       }
 
       return [];
@@ -290,8 +303,8 @@ Are these summaries talking about the same news items or topics? Answer with jus
     }
   }
 
-  // Get the past topics as a formatted string for the LLM prompt
-  public async getPastTopics(count: number = 10): Promise<string> {
+  // Get the past news as a formatted string for the LLM prompt
+  public async getPastNews(count: number = 10): Promise<string> {
     const summaries = await this.getAllSummaries();
 
     // Sort by timestamp (newest first)
@@ -303,20 +316,20 @@ Are these summaries talking about the same news items or topics? Answer with jus
     // Take the most recent summaries
     const recentSummaries = summaries.slice(0, count);
 
-    // Extract all topics from the summaries
-    let allTopics: string[] = [];
+    // Extract all news from the summaries
+    let allNews: string[] = [];
     for (const summary of recentSummaries) {
-      const topics = summary.content
+      const news = summary.content
         .split('\n')
         .map((line) => line.trim())
         .filter((line) => line.match(/^\d+\./)); // Lines that start with a number and period
 
-      allTopics = [...allTopics, ...topics];
+      allNews = [...allNews, ...news];
     }
 
     // Return formatted topics
-    return allTopics
-      .map((topic) => `- ${topic.replace(/^\d+\.\s*/, '')}`)
+    return allNews
+      .map((news) => `- ${news.replace(/^\d+\.\s*/, '')}`)
       .join('\n');
   }
 }

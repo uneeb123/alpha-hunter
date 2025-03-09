@@ -30,6 +30,7 @@ import {
   BaseChatModelCallOptions,
 } from '@langchain/core/language_models/chat_models';
 import { BaseMessageChunk } from '@langchain/core/messages';
+// import { JsonOutputParser } from '@langchain/core/output_parsers';
 
 // BaseAgent class to handle common agent functionality
 export class BaseAgent {
@@ -124,36 +125,35 @@ export class SummaryAgent extends BaseAgent {
   async generateSummary(
     tweets: string,
     alpha: string,
-    pastTopics: string,
+    pastNews: string,
     checkDuplicates: boolean = true,
   ): Promise<string> {
-    // If vector store is available and checkDuplicates is true, get updated past topics
-    let pastTopicsText = pastTopics;
+    // If vector store is available and checkDuplicates is true, get updated past news
+    let pastNewsText = pastNews;
     if (this.vectorStore && checkDuplicates) {
       try {
-        // Get recent topics from vector store
-        const vectorStorePastTopics = await this.vectorStore.getPastTopics(10);
-        if (vectorStorePastTopics && vectorStorePastTopics.length > 0) {
-          pastTopicsText = vectorStorePastTopics;
+        // Get recent news from vector store
+        const vectorStorePastNews = await this.vectorStore.getPastNews(10);
+        if (vectorStorePastNews && vectorStorePastNews.length > 0) {
+          pastNewsText = vectorStorePastNews;
         }
       } catch (error) {
-        console.error('Error getting past topics from vector store:', error);
-        // Continue with original past topics
+        console.error('Error getting past news from vector store:', error);
+        // Continue with original past news
       }
     }
 
     const systemPrompt = `You are Max Profit. You identify latest updates in crypto from the given Tweets. \
-Your content never includes past topics. If focus area is provided, then keep updates relevant to that.
+Your content never includes past news. If focus area is provided, then keep updates relevant to that.
   
 # Instructions
-- Identify 5 distinct topics from the tweets
+- Identify 5 distinct news from the tweets
 - Prioritize news that is most mentioned in the Tweets (also consider view count)
 - Sort by most popular update (descending order) but don't mention it in the summary
-- Each topic should written in plain American English Language and have a maximum 1-2 sentences. Be concise and to the point.
-- Don't start with 'Based on the provided tweets...', just share the updates directly
-- No need for a start and end, just output the updates as enumerated list
-- IMPORTANT: NEVER repeat any of the past topics - these have already been covered
-- If a topic is similar to a past topic but has new developments, mention only the NEW developments`;
+- Each news should written in plain American English Language and have a maximum 1-2 sentences. Be concise and to the point.
+- IMPORTANT: NEVER repeat any of the past news - these have already been covered
+- If a news is similar to a past news but has new developments, mention only the NEW developments
+- Return your response as a JSON array of strings, with each string being a news item.`;
 
     let focusArea = ``;
     if (alpha === 'AI_AGENTS') {
@@ -166,17 +166,13 @@ Your content never includes past topics. If focus area is provided, then keep up
 
     const task = `Generate an article from the provided News for the character Max Profit.`;
 
-    const example = `1. Kava launched the largest decentralized AI model on Feb 28, 2025, advancing blockchain technology.
-2. Crypto scam revenue reached $9.9B-$12.4B in 2024, fueled by AI-driven fraud like romance scams.
-3. U.S. AI and Crypto Czar David Sacks proposed regulation and a national Bitcoin reserve in Feb 2025.
-4. AI integration in crypto trading platforms is improving predictive analytics and user efficiency.
-5. Stablecoins are gaining traction as AI enhances their role in global financial systems, per Sacks' vision.`;
+    const example = `["Kava launched the largest decentralized AI model on Feb 28, 2025, advancing blockchain technology.", "Crypto scam revenue reached $9.9B-$12.4B in 2024, fueled by AI-driven fraud like romance scams.", "U.S. AI and Crypto Czar David Sacks proposed regulation and a national Bitcoin reserve in Feb 2025.", "AI integration in crypto trading platforms is improving predictive analytics and user efficiency.", "Stablecoins are gaining traction as AI enhances their role in global financial systems, per Sacks' vision."]`;
 
     const humanPrompt =
       `# Task: ${task}\n\n` +
       `\n\n# Tweets\n\n${tweets}\n\n` +
       `\n\n# Focus Area\n\n$${focusArea}\n\n` +
-      `\n\n# Past Topics\n\n${pastTopicsText}\n\n` +
+      `\n\n# Past News\n\n${pastNewsText}\n\n` +
       `\n\n# Example\n\n${example}`;
 
     // Create and execute the prompt chain
@@ -316,7 +312,7 @@ Max Profit: Well, the big story is the surge in AI-related projects. We're seein
 // TweetAnalyzerAgent to analyze tweet relevance and categorize content
 export class TweetAnalyzerAgent extends BaseAgent {
   async analyzeTweets(
-    tweets: string[],
+    tweets: string,
     interests: string[],
   ): Promise<Record<string, number>> {
     const systemPrompt = `You are an AI assistant that specializes in analyzing cryptocurrency and blockchain related tweets.
@@ -327,7 +323,7 @@ Please analyze each tweet and assign a relevance score from 0-100 for each inter
 Return the results as a JSON object where each tweet has a score for each interest area.
 
 Tweets:
-${tweets.join('\n\n')}`;
+${tweets}`;
 
     this.model.temperature = 0; // Set to deterministic for analysis
 
@@ -346,7 +342,8 @@ ${tweets.join('\n\n')}`;
         content.match(/{[\s\S]*}/);
 
       const jsonContent = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
-      return JSON.parse(jsonContent);
+      const analysisResults = JSON.parse(jsonContent);
+      return analysisResults;
     } catch (error) {
       console.error('Failed to parse JSON from analysis response:', error);
       return {};

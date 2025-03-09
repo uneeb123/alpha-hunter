@@ -1,6 +1,8 @@
 # Scripts
 
-## Create users and alpha
+## Management
+
+#### Create users and alpha
 
 Read the information from `src/scripts/users.json` and updates the tables
 Operation is idempotent
@@ -9,7 +11,7 @@ Operation is idempotent
 pnpm bulk-add-users -d verbose
 ```
 
-## Delete all scrapers and users
+#### Delete all scrapers and users
 
 ```
 pnpm delete-all

@@ -12,7 +12,7 @@ import { getSecrets } from '@/utils/secrets';
 import { PrismaClient } from '@prisma/client';
 import { TweetsCompiler } from './tweets_compiler';
 import { TelegramClient } from './telegram_client';
-import { AgentFactory } from '@/utils/langchain_agent';
+// import { AgentFactory } from '@/utils/langchain_agent';
 // import { generateAudio } from './voice_client';
 
 export async function processWorkflow(
@@ -55,7 +55,8 @@ export async function processWorkflow(
     cutoffTime,
   );
 
-  const pastTopics = `- Kaito Launches Token on Base, InfoFi Era Begins Tomorrow
+  // TODO: stored in a vector database
+  const pastNews = `- Kaito Launches Token on Base, InfoFi Era Begins Tomorrow
 - Bybit's $1.4B Hack Triggers Industry-Wide Shift in Crisis Management
 - Citadel Securities Makes Major Crypto Market Making Move, Targets Top Exchanges
 - Stablecoin Wars Heat Up as Regulatory Battle Emerges Over Treasury Market Access`;
@@ -65,14 +66,17 @@ export async function processWorkflow(
   if (useLangchain) {
     // Optional: Add tweet analysis with Langchain
     debug.info('Analyzing tweets with Langchain agent');
+
+    // TODO: fix scoring
+
+    /*
     const tweetAnalyzerAgent = AgentFactory.createTweetAnalyzerAgent(
       secrets.anthropicApiKey,
     );
-    const tweetContents = contents.split('\n\n');
-    const interests = ['AI', 'DeFi', 'NFT', 'Layer2', 'Regulation'];
+    const interests = ['AI agents'];
     try {
       const analysisResults = await tweetAnalyzerAgent.analyzeTweets(
-        tweetContents,
+        contents,
         interests,
       );
       debug.verbose(
@@ -83,12 +87,13 @@ export async function processWorkflow(
       debug.error('Tweet analysis failed:', error as Error);
       // Continue execution even if analysis fails
     }
+    */
 
     summary = await generateSummaryLangchain(
       secrets.anthropicApiKey,
       contents,
       alpha.name,
-      pastTopics,
+      pastNews,
       alpha.id,
       processor.id.toString(),
     );
@@ -98,7 +103,7 @@ export async function processWorkflow(
       secrets.anthropicApiKey,
       contents,
       alpha.name,
-      pastTopics,
+      pastNews,
     );
     debug.info('Generated summary using vanilla LLM');
   }
@@ -118,7 +123,7 @@ export async function processWorkflow(
         contents,
         summary,
         alpha.name,
-        pastTopics,
+        pastNews,
       );
       debug.info('Generated podcast script using Langchain');
     } else {
@@ -127,7 +132,7 @@ export async function processWorkflow(
         contents,
         summary,
         alpha.name,
-        pastTopics,
+        pastNews,
       );
       debug.info('Generated podcast script using vanilla LLM');
     }
