@@ -1,3 +1,4 @@
+/*
 import * as dotenv from 'dotenv';
 import axios from 'axios';
 import { Debugger, DebugConfig } from '@/utils/debugger';
@@ -186,7 +187,6 @@ const main = async (): Promise<void> => {
     // const mentionsResponse = await getMentions();
     // debug.info('Mentions response:', mentionsResponse);
 
-    /*
     const topMentionsResponse = await getTopMentions();
     debug.info('Top mentions response:', topMentionsResponse);
     
@@ -198,7 +198,6 @@ const main = async (): Promise<void> => {
     
     const smartStatsResponse = await getAccountSmartStats();
     debug.info('Account smart stats response:', smartStatsResponse);
-    */
 
     debug.info('Elfa API test completed successfully');
   } catch (error) {
@@ -212,3 +211,4 @@ main().catch((error) => {
   console.error('Unhandled error in main:', error);
   process.exit(1);
 });
+*/
