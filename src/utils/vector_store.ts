@@ -1,4 +1,3 @@
-import { ChatAnthropic } from '@langchain/anthropic';
 import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
@@ -10,7 +9,7 @@ import { Debugger } from '@/utils/debugger';
 // Define a class for vector store operations
 export class VectorStore {
   private static instance: VectorStore;
-  private vectorStore: MemoryVectorStore | Chroma;
+  private vectorStore!: MemoryVectorStore | Chroma;
   private embeddings: OpenAIEmbeddings;
   private debug = Debugger.getInstance();
   private useChroma: boolean;
@@ -28,15 +27,17 @@ export class VectorStore {
     this.useChroma = useChroma;
     this.chromaCollection = chromaCollection;
     this.chromaUrl = chromaUrl;
+  }
 
-    if (useChroma) {
+  public async init() {
+    if (this.useChroma) {
       // Create a Chroma vector store
       this.vectorStore = new Chroma(this.embeddings, {
-        collectionName: chromaCollection,
-        url: chromaUrl,
+        collectionName: this.chromaCollection,
+        url: this.chromaUrl,
       });
       this.debug.info(
-        `Using Chroma vector store with collection: ${chromaCollection}`,
+        `Using Chroma vector store with collection: ${this.chromaCollection}`,
       );
     } else {
       // Create an in-memory vector store
@@ -44,17 +45,17 @@ export class VectorStore {
       this.debug.info('Using in-memory vector store');
 
       // Try to load existing vectors from a file if it exists
-      this.loadFromFile();
+      await this.loadFromFile();
     }
   }
 
   // Get the singleton instance
-  public static getInstance(
+  public static async getInstance(
     openAIApiKey: string,
     useChroma: boolean = false,
     chromaCollection: string = 'alpha-hunter',
     chromaUrl?: string,
-  ): VectorStore {
+  ): Promise<VectorStore> {
     if (!VectorStore.instance) {
       VectorStore.instance = new VectorStore(
         openAIApiKey,
@@ -63,6 +64,7 @@ export class VectorStore {
         chromaUrl,
       );
     }
+    await VectorStore.instance.init();
     return VectorStore.instance;
   }
 
@@ -85,39 +87,15 @@ export class VectorStore {
     }
   }
 
-  // Add a single summary to the vector store
-  public async addSummary(
-    summary: string,
-    alphaId: number,
-    processorId: string,
-    timestamp: Date,
-  ): Promise<void> {
-    // Create metadata for the summary
-    const metadata = {
-      alphaId: alphaId.toString(),
-      processorId: processorId,
-      timestamp: timestamp.toISOString(),
-      type: 'summary',
-    };
-
-    // Create a document from the summary
-    const document = new Document({
-      pageContent: summary,
-      metadata,
-    });
-
-    await this.addDocuments([document]);
-  }
-
-  // Search for similar summaries
-  public async similaritySummarySearch(
+  // Search for similar news items
+  public async similaritySearch(
     query: string,
     k: number = 5,
   ): Promise<Document[]> {
     try {
-      const filter = (doc: Document) => doc.metadata?.type === 'summary';
+      const filter = (doc: Document) => doc.metadata?.type === 'news_item';
       const results = await this.vectorStore.similaritySearch(query, k, filter);
-      this.debug.info(`Found ${results.length} similar documents`);
+      this.debug.info(`Found ${results.length} similar news items`);
       return results;
     } catch (error) {
       this.debug.error('Error searching vector store:', error as Error);
@@ -125,99 +103,44 @@ export class VectorStore {
     }
   }
 
-  // Check if a summary is too similar to existing ones
-  public async isDuplicateSummary(
-    summary: string,
-    // similarityThreshold: number = 0.9,
-  ): Promise<boolean> {
-    const results = await this.similaritySummarySearch(summary, 5);
-
-    if (results.length === 0) {
-      return false;
-    }
-
-    // We'll use the model to determine similarity
-    const model = new ChatAnthropic({
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-      modelName: 'claude-3-haiku-20240307',
-      temperature: 0,
-    });
-
-    const prompt = `Compare the following two summaries and determine if they are discussing the same news or topics. 
-First summary: ${summary}
-
-Second summary: ${results[0].pageContent}
-
-Are these summaries talking about the same news items or topics? Answer with just "yes" or "no".`;
-
+  // Get recent news headlines from the vector store
+  public async getRecentNewsHeadlines(limit: number = 5): Promise<string[]> {
     try {
-      const response = await model.invoke(prompt);
-      const answer = response.content.toString().toLowerCase().trim();
+      // Use filter directly in the search call, same as similaritySearch method
+      const filter = (doc: Document) => doc.metadata?.type === 'news_item';
+      const results = await this.vectorStore.similaritySearch(
+        '',
+        limit * 2,
+        filter,
+      );
+      this.debug.info(
+        `Total documents retrieved from vector store: ${results.length}`,
+      );
 
-      this.debug.info(`Duplicate check result: ${answer}`);
-      return answer.includes('yes');
+      // No need to filter again as we've already filtered in the search
+      const newsItems = results;
+      this.debug.info(
+        `Found ${newsItems.length} news items before sorting and limiting`,
+      );
+
+      // Sort by timestamp descending
+      const sortedResults = newsItems.sort((a, b) => {
+        const timestampA = new Date(a.metadata?.timestamp || 0).getTime();
+        const timestampB = new Date(b.metadata?.timestamp || 0).getTime();
+        return timestampB - timestampA;
+      });
+
+      // Extract headlines from metadata and limit results
+      const headlines = sortedResults
+        .slice(0, limit)
+        .map((doc) => doc.metadata?.headline)
+        .filter((headline): headline is string => !!headline); // Filter out any undefined headlines
+
+      this.debug.info(`Retrieved ${headlines.length} recent headlines`);
+      return headlines;
     } catch (error) {
-      this.debug.error('Error checking for duplicate summary:', error as Error);
-      // If there's an error, we'll assume it's not a duplicate
-      return false;
-    }
-  }
-
-  // Get all summaries as structured data
-  public async getAllSummaries(): Promise<
-    {
-      content: string;
-      alphaId: string;
-      processorId: string;
-      timestamp: string;
-    }[]
-  > {
-    try {
-      if (this.useChroma) {
-        // For Chroma, we need to get all documents
-        const results = await this.vectorStore.similaritySearch('', 1000, {
-          type: 'summary',
-        });
-
-        return results.map((doc) => ({
-          content: doc.pageContent,
-          alphaId: doc.metadata.alphaId,
-          processorId: doc.metadata.processorId,
-          timestamp: doc.metadata.timestamp,
-        }));
-      } else if (this.vectorStore instanceof MemoryVectorStore) {
-        // For memory store, we can access the documents directly
-        const memoryStore = this.vectorStore as MemoryVectorStore;
-
-        // Add debug logging to see the structure
-        this.debug.info(
-          `Memory vectors length: ${memoryStore.memoryVectors.length}`,
-        );
-        if (memoryStore.memoryVectors.length > 0) {
-          this.debug.info(
-            `First memory vector keys: ${Object.keys(memoryStore.memoryVectors[0]).join(', ')}`,
-          );
-        }
-
-        // Try to access documents through the proper API instead
-        const results = await this.vectorStore.similaritySearch(
-          '',
-          1000,
-          (doc) => doc.metadata?.type === 'summary',
-        );
-
-        return results.map((doc) => ({
-          content: doc.pageContent,
-          alphaId: doc.metadata.alphaId,
-          processorId: doc.metadata.processorId,
-          timestamp: doc.metadata.timestamp,
-        }));
-      }
-
-      return [];
-    } catch (error) {
-      this.debug.error('Error getting all summaries:', error as Error);
-      return [];
+      this.debug.error('Error getting recent headlines:', error as Error);
+      throw error;
     }
   }
 
@@ -278,15 +201,7 @@ Are these summaries talking about the same news items or topics? Answer with jus
 
       // Convert the loaded data to Documents
       const documents = vectors.map(
-        (vec: {
-          content: string;
-          metadata: {
-            alphaId: string;
-            processorId: string;
-            timestamp: string;
-            type: string;
-          };
-        }) =>
+        (vec: { content: string; metadata: Record<string, unknown> }) =>
           new Document({
             pageContent: vec.content,
             metadata: vec.metadata,
@@ -301,35 +216,5 @@ Are these summaries talking about the same news items or topics? Answer with jus
     } catch (error) {
       this.debug.error('Error loading vector store from file:', error as Error);
     }
-  }
-
-  // Get the past news as a formatted string for the LLM prompt
-  public async getPastNews(count: number = 10): Promise<string> {
-    const summaries = await this.getAllSummaries();
-
-    // Sort by timestamp (newest first)
-    summaries.sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-    );
-
-    // Take the most recent summaries
-    const recentSummaries = summaries.slice(0, count);
-
-    // Extract all news from the summaries
-    let allNews: string[] = [];
-    for (const summary of recentSummaries) {
-      const news = summary.content
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line.match(/^\d+\./)); // Lines that start with a number and period
-
-      allNews = [...allNews, ...news];
-    }
-
-    // Return formatted topics
-    return allNews
-      .map((news) => `- ${news.replace(/^\d+\.\s*/, '')}`)
-      .join('\n');
   }
 }

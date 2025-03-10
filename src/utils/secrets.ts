@@ -61,7 +61,7 @@ class SecretsManager {
       twitterAccessSecret: TWITTER_ACCESS_TOKEN_SECRET!,
       anthropicApiKey: ANTHROPIC_API_KEY!,
       elevenLabsApiKey: ELEVENLABS_API_KEY!,
-      openaiApiKey: OPENAI_API_KEY || '', // Optional, used for vector embeddings
+      openaiApiKey: OPENAI_API_KEY!,
       awsRegion: AWS_REGION!,
       awsBucketName: AWS_BUCKET_NAME!,
       telegramBotToken: TELEGRAM_BOT_TOKEN!,

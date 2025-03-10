@@ -109,7 +109,10 @@ export class TweetsCompiler {
     }
 
     this.debug.info(`Processed tweets for ${allUserResults.length} users`);
-    this.debug.verbose('All user results:', allUserResults);
+    this.debug.verbose(
+      'All user results:',
+      JSON.stringify(allUserResults, null, 2),
+    );
 
     const parsedTweetsPath = `extractor/${processor.id}_parsed.json`;
     await this.s3Client.send(
@@ -137,7 +140,7 @@ export class TweetsCompiler {
 
     for (const userTweets of parsedData) {
       for (const tweet of userTweets.tweets) {
-        formattedText += `${userTweets.user.data.username} wrote at ${tweet.created_at} (${tweet.view_count} views)\n\n`;
+        formattedText += `${userTweets.user.data.name} wrote at ${tweet.created_at} (${tweet.view_count} views)\n\n`;
 
         if (tweet.text.length === 1) {
           formattedText += `${tweet.text[0]}\n\n`;
@@ -146,6 +149,9 @@ export class TweetsCompiler {
             formattedText += `${index + 1}. ${text}\n\n`;
           });
         }
+
+        // Add source URL for the tweet
+        formattedText += `Source: https://x.com/${userTweets.user.data.username}/status/${tweet.id}\n\n`;
 
         formattedText += '---\n\n';
       }
