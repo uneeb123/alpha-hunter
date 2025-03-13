@@ -43,7 +43,7 @@ export class Extractor {
     const summary = await this.generateAndStoreSummary(contents);
 
     if (generatePodcast) {
-      await this.createPodcast(contents, summary, '');
+      await this.createPodcast(contents, summary);
     }
 
     await this.handleSocialMediaPosting(
@@ -121,17 +121,11 @@ export class Extractor {
     return summary;
   }
 
-  private async createPodcast(
-    contents: string,
-    summary: string,
-    pastNews: string,
-  ) {
+  private async createPodcast(contents: string, summary: string) {
     const script = await generatePodcastScript(
       this.secrets.anthropicApiKey,
       contents,
       summary,
-      this.alpha.name,
-      pastNews,
     );
     this.debug.info('Generated podcast script using vanilla LLM');
     this.debug.verbose(script);
@@ -142,15 +136,14 @@ export class Extractor {
     });
     this.debug.info('Updated processor with generated script');
 
-    const lines = await generatePodcastAudio(
+    const transcription = await generatePodcastAudio(
       this.secrets.elevenLabsApiKey,
       script,
       this.processor.id,
     );
     this.debug.info('Generated podcast audio');
-    this.debug.verbose(lines);
 
-    await generatePodcastVideo(this.processor.id, lines);
+    await generatePodcastVideo(this.processor.id, transcription);
     this.debug.info('Generated podcast video');
   }
 
@@ -164,7 +157,7 @@ export class Extractor {
 
     if (withMedia) {
       // Post with media if podcast was generated
-      await tweetsManager.postTweetWithMedia(this.processor.id, summary);
+      await tweetsManager.postTweetWithMedia(this.processor.id, '');
       this.debug.info('Posted tweet with podcast media');
     } else {
       // Post text-only tweet if no podcast

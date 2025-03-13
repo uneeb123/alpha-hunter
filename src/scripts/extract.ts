@@ -61,7 +61,7 @@ export const main = async (): Promise<void> => {
     await prisma.$disconnect();
   } catch (error) {
     debug.error(`Failed to complete workflow: ${error}`);
-    throw error;
+    // no need to throw here
   }
 };
 

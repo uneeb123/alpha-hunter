@@ -6,69 +6,54 @@ export const generatePodcastScript = async (
   apiKey: string,
   tweets: string,
   relevantTopics: string,
-  alpha: string,
-  pastTopics: string,
 ) => {
   const anthropic = createAnthropic({
     apiKey,
   });
 
-  let focusArea = ``;
-  if (alpha === 'AI_AGENTS') {
-    focusArea += `AI Agents`;
-  } else if (alpha === 'KAITO') {
-    focusArea += `Kaito ecosystem.`;
-  } else if (alpha === 'GENERAL') {
-    focusArea += `None`;
-  }
-
-  const system = `You are a podcast script generator of a Crypto meets AI podcast show called Genkless.
-Genkless focuses on educating and empowering individuals to navigate the crypto landscape.
-There are three speakers involved: Max Profit, Dabid Hoffbro and Ryan Seen Adz.
+  const system = `You are a podcast script generator of a Crypto meets AI podcast show called "The Max Market Show".
+"The Max Market Show" focuses on educating and empowering individuals to navigate the crypto landscape.
+There are two speakers involved: Max Market and Pepe the Frog.
 
 # Instructions
 
-- The script should cover all the topics provided in the "Relevant Topics" section
+- The script should cover the first topic from the "Relevant Topics" section
 - The characters information is provided in the "Character" section, make sure the script is relevant to the characters
-- Check the "Tweets" section and extrapolate information from there to get contents for the scripts
-- Check "Past Topics" section to know which topics have already been covered and should be avoided
+- Check the "Tweets" section and extrapolate information from there to get more information for the script
 - Check the "Script Directions" section for the style and tone of the script content
 - Don't say 'Here's a news script', just share the script
-- No music effects or laughs, just words of what the speakers will say`;
+- IMPORTANT: NO SOUND EFFECTS IN THE SCRIPT, JUST PLAIN WORDS
+- 5 LINES MAXIMUM, MAX GETS 2 LINES AND PEPE GETS 3 LINES`;
 
-  const task = `Write a script for podcast Genkless based on the News.`;
+  const task = `Write a script for podcast "The Max Market Show" based on the News.`;
 
   const characters = `## Max Profit
 Max is an AI agent is the expert guest on the podcast.
 He works at a hedge fund and is never wrong about the bets he makes.
-Max Profit has all the insights and updates.
+Max Market has all the insights and updates.
 
-## Dabid Hoffbro
-Dabid Hoffbro is the co-founder and host of Genkless.
-Dabid is great at asking questions and breaking things down simply.
-
-## Ryan Seen Adz
-Ryan Seen Adz is the co-founder and host of Genkless.
-Ryan is great at asking questions and breaking things down simply.`;
+## Pepe the Frog
+Pepe is a laid-back internet icon and the host on the podcast.  
+He started as a humble comic book character but evolved into a cultural phenomenon.  
+Pepe lives by the motto *“Feels good, man”*—but his moods can shift with the markets.  
+Sometimes a savvy trader, sometimes a doomposter, Pepe represents the highs and lows of speculation.  
+Whether celebrating a bull run or lamenting a rug pull, Pepe always keeps it real.`;
 
   const scriptDirections = `\
-- Engaging and well-structured podcast episode.
-- The podcast should have a natural flow, a strong introduction, engaging discussions, and a conclusion that 
-leaves listeners with key takeaways. Keep the tone aligned with the target audience, whether it's casual, 
-professional, humorous, or thought-provoking.
-- Ensure logical coherence, smooth transitions, and a compelling storytelling approach.
-- The host should be inquisitive and the guest should share insights
-- The host can challenge the guest to get more clarity
-- Use plain American English Language
-- Add humor wherever possible`;
+- There is no beginning or end, just jump directly into the topic.
+- Pepe (host) is curious, chaotic, and always keeps it real. He asks sharp, sometimes ridiculous questions, reacts with memes, sarcasm, and exaggerated emotions, but ultimately pushes for real insights.
+- Max Market (guest) is the seasoned trader who's seen it all. He explains big trades, market moves, and trends in a way that even a degen can understand.
+- Use plain, American English—but sprinkle in crypto slang, internet culture references, and Pepe-isms where it makes sense.
+- MAKE IT FUNNY
+- NO ASTERISKS IN THE SCRIPT`;
 
   const prompt =
     `# Task: ${task}\n\n` +
     `\n\n# Relevant Topics\n\n${relevantTopics}\n\n` +
-    `\n\n# Past Topics\n\n${pastTopics}\n\n` +
+    // `\n\n# Past Topics\n\n${pastTopics}\n\n` +
     `\n\n# Characters\n\n${characters}\n\n` +
     `\n\n# Script Directions\n\n${scriptDirections}\n\n` +
-    `\n\n# Focus Area\n\n$${focusArea}\n\n` +
+    // `\n\n# Focus Area\n\n$${focusArea}\n\n` +
     `\n\n# Tweets\n\n${tweets}\n\n` +
     `\n\n# Example\n\n${example}`;
 
@@ -85,42 +70,10 @@ professional, humorous, or thought-provoking.
   return anthropicResponse;
 };
 
-const example = `\Dabid Hoffbro: Welcome back to another episode of Genkless, where we break down the intersection of AI and crypto. I'm your host Dabid Hoffbro, joined by my co-host Ryan Seen Adz and our resident AI trading expert, Max Profit. Today, we've got some exciting developments to discuss in the AI-crypto space.
+const example = `PEPE: Yo what's good fam! Welcome back to another episode of The Max Market Show. I'm your host Pepe the Frog, and with me today is the one and only Max Market! Max, the AI space is absolutely BOOMING right now. What's got you excited?
 
-Ryan Seen Adz: That's right, Dabid. The AI sector is showing strong signs of recovery, and we've got some fascinating stories to unpack. Max, what's catching your attention in the markets?
+MAX: Thanks Pepe. The AI landscape is evolving at breakneck speed. Just in the past week, we've seen some major developments. Anthropic's CEO made waves by predicting AI will write 90% of code within 6 months. That's a bold claim that's got everyone talking.
 
-Max Profit: Well, the big story is the surge in AI-related projects. We're seeing significant capital inflows, with Virtuals.io leading the charge with over $2 million in net inflows in just 24 hours. But what's really interesting is how AI is breaking into mainstream applications.
+PEPE: Feels good man! But also kinda scary for all the dev frens out there. What else is cooking?
 
-Dabid Hoffbro: Speaking of mainstream, I heard something about an NBA champion getting involved?
-
-Max Profit: Exactly. Tracy AI just launched as Virtuals' flagship agent on Solana, backed by NBA champion Tristan Thompson. They're creating an AI sports analyst and commentator. This is a perfect example of how AI is expanding beyond traditional crypto use cases.
-
-Ryan Seen Adz: That's fascinating. It seems like we're seeing a real convergence of sports, AI, and blockchain technology. What makes this different from traditional sports analytics?
-
-Max Profit: The key difference is the autonomous nature of these AI agents. They can provide real-time analysis, commentary, and insights that would typically require a team of human analysts. Plus, it's all happening on-chain, making it transparent and accessible.
-
-Dabid Hoffbro: So basically, it's like having an NBA analyst in your pocket who never sleeps and can't be bribed with courtside tickets?
-
-Max Profit: Precisely. And speaking of interesting developments, Story Protocol just launched their mainnet with their $IP token trading at a $2.5 billion fully diluted valuation.
-
-Ryan Seen Adz: That's a significant valuation. What makes Story Protocol so special?
-
-Max Profit: They're essentially creating a new asset class by making intellectual property programmable and tradeable on-chain. Think about it – as AI generates more content, having a decentralized way to manage and monetize IP rights becomes crucial.
-
-Dabid Hoffbro: And this ties into the broader trend we're seeing with AI agents, right? These aren't just chatbots anymore.
-
-Max Profit: Exactly. Take Vader's new Early Agent Offering platform. They're creating a launchpad specifically for AI agents, helping developers raise capital and build communities before launch. It's like Y Combinator for AI agents.
-
-Ryan Seen Adz: That's pretty innovative. What about the risks? We've seen plenty of launchpads come and go in crypto.
-
-Max Profit: The key difference here is the focus on AI capabilities. They're using machine learning to score holders and prevent manipulation. It's not just about throwing money at projects; it's about building sustainable AI ecosystems.
-
-Dabid Hoffbro: Before we wrap up, any final thoughts on where this is all heading?
-
-Max Profit: Watch the convergence of physical and digital AI. We're seeing the emergence of what's being called DePAI – Decentralized Physical AI. This could be the bridge between crypto AI agents and real-world robotics.
-
-Ryan Seen Adz: That's both exciting and slightly terrifying!
-
-Dabid Hoffbro: And on that dystopian note, we'll wrap up today's episode! Thanks for joining us on Genkless. Remember to like, subscribe, and let us know your thoughts on these developments in the comments below.
-
-Ryan Seen Adz: And remember, not financial advice, but definitely financial entertainment!`;
+MAX: Well, Alibaba just dropped their QWEN-32B model that's matching top performers at just 5% of the cost. OpenAI released their Agent SDK, making it easier for developers to create multi-agent systems. And Kaito AI launched a public API for real-time Yaps scores, which is huge for social metrics in crypto.`;
