@@ -1,291 +1,218 @@
-import { readFile } from 'fs/promises';
-import fs from 'fs';
-import ffmpeg from 'fluent-ffmpeg';
-import path from 'path';
 import { Debugger } from '@/utils/debugger';
-import { TranscriptionResponse } from './podcast_audio';
-import puppeteer from 'puppeteer';
+import { TranscriptionResponse, TranscriptionWord } from './podcast_audio';
+import * as path from 'path';
+import { generateVideo } from './video-generator/puppeteer';
+import * as fs from 'fs';
+import ffmpeg from 'fluent-ffmpeg';
 
-/*
-Integration with FFmpeg for podcast video generation and styled captions
-*/
+// Helper function to convert transcription to SRT format
+const generateSrtContent = (words: TranscriptionWord[]): string => {
+  const debug = Debugger.getInstance();
 
-/**
- * Generates podcast video from audio with styled captions using WebGL
- */
+  // Check if words array exists and has items
+  if (!words || !Array.isArray(words) || words.length === 0) {
+    debug.error('Words array is invalid or empty');
+    return '';
+  }
+
+  try {
+    let srtContent = '';
+    let index = 1;
+    let currentLine = '';
+    let startTime = 0;
+    let endTime = 0;
+
+    const formatTime = (seconds: number): string => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      const ms = Math.floor((seconds * 1000) % 1000);
+
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+    };
+
+    // Filter out spacing elements and only keep word elements
+    const wordElements = words.filter((word) => word.type === 'word');
+    debug.info(
+      `Filtered ${wordElements.length} word elements from ${words.length} total elements`,
+    );
+
+    for (let i = 0; i < wordElements.length; i++) {
+      const word = wordElements[i];
+
+      // Use text property instead of word property
+      if (
+        !word ||
+        typeof word.start !== 'number' ||
+        typeof word.end !== 'number' ||
+        typeof word.text !== 'string'
+      ) {
+        debug.error(
+          `Invalid word object at index ${i}: ${JSON.stringify(word)}`,
+        );
+        continue;
+      }
+
+      if (currentLine.length === 0) {
+        startTime = word.start;
+        currentLine = word.text;
+      } else if (currentLine.length + word.text.length + 1 <= 40) {
+        currentLine += ' ' + word.text;
+      } else {
+        if (i > 0) {
+          endTime = wordElements[i - 1].end;
+
+          srtContent += `${index}\n`;
+          srtContent += `${formatTime(startTime)} --> ${formatTime(endTime)}\n`;
+          srtContent += `${currentLine}\n\n`;
+
+          index++;
+          currentLine = word.text;
+          startTime = word.start;
+        }
+      }
+
+      // Handle the last line
+      if (i === wordElements.length - 1) {
+        endTime = word.end;
+
+        srtContent += `${index}\n`;
+        srtContent += `${formatTime(startTime)} --> ${formatTime(endTime)}\n`;
+        srtContent += `${currentLine}\n\n`;
+      }
+    }
+
+    return srtContent;
+  } catch (error) {
+    debug.error(`Error in generateSrtContent: ${error}`);
+    return '';
+  }
+};
+
 export const generatePodcastVideo = async (
   processorId: number,
   transcription: TranscriptionResponse,
   customAudioPath?: string,
   customOutputPath?: string,
 ): Promise<boolean> => {
+  const debug = Debugger.getInstance();
+  debug.info('Starting podcast video generation with WebGL');
+
+  // Debug the transcription object
+  debug.verbose(
+    `Transcription object: ${JSON.stringify(transcription, null, 2)}`,
+  );
+
   const outputDir = path.join('data', processorId.toString());
 
   // Use custom paths if provided, otherwise use default paths
   const audioPath = customAudioPath || path.join(outputDir, 'audio.mp3');
   const outputVideoPath =
     customOutputPath || path.join(outputDir, 'podcast.mp4');
-
-  const debug = Debugger.getInstance();
-
-  try {
-    debug.info('Generating podcast video with WebGL in headless browser');
-    debug.info(`Using audio file: ${audioPath}`);
-    debug.info(`Output video will be saved to: ${outputVideoPath}`);
-
-    return await generateVideoWithWebGL(
-      processorId,
-      audioPath,
-      transcription,
-      outputVideoPath,
-    );
-  } catch (error) {
-    debug.error(`Failed to generate podcast video: ${error}`);
-    return false;
-  }
-};
-
-/**
- * Generate a video using WebGL in a headless browser
- */
-const generateVideoWithWebGL = async (
-  processorId: number,
-  audioPath: string,
-  transcription: TranscriptionResponse,
-  outputPath: string,
-): Promise<boolean> => {
-  const debug = Debugger.getInstance();
-
-  // Make sure output directory exists (for the final video file)
-  const outputDir = path.dirname(outputPath);
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  // Use absolute paths for better reliability
-  const absAudioPath = path.resolve(audioPath);
-  const absOutputPath = path.resolve(outputPath);
-
-  debug.info(`Using absolute audio path: ${absAudioPath}`);
-  debug.info(`Using absolute output path: ${absOutputPath}`);
-
-  // Use a consistent webgl directory instead of processor ID
-  const tempDir = path.join('data', 'webgl', 'temp');
-  const videoFramesDir = path.join(tempDir, 'frames');
-
-  // Create temp directories if they don't exist
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
-  }
-  if (!fs.existsSync(videoFramesDir)) {
-    fs.mkdirSync(videoFramesDir, { recursive: true });
-  }
-
-  // Verify audio file exists
-  if (!fs.existsSync(absAudioPath)) {
-    debug.error(`Audio file not found at: ${absAudioPath}`);
-    return false;
-  }
+  const tempVideoPath = path.join(outputDir, 'temp_podcast.mp4');
+  const srtPath = path.join(outputDir, 'captions.srt');
 
   try {
-    // Launch browser with WebGL support
-    debug.info('Launching headless browser for WebGL video generation');
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--ignore-gpu-blocklist',
-        '--enable-gpu-rasterization',
-        '--enable-webgl',
-        '--use-gl=angle',
-        '--use-angle=metal',
-      ],
+    // Call the generateVideo function with the audio path and output path
+    debug.info(`Generating base video with audio: ${audioPath}`);
+    await generateVideo(audioPath, {
+      outputPath: tempVideoPath, // Use temporary path for the initial video
+      width: 1200,
+      height: 676,
+      strength: 0.3,
     });
 
-    // Create a new page
-    const page = await browser.newPage();
+    debug.info(`Base podcast video generated at: ${tempVideoPath}`);
 
-    // Set viewport size
-    await page.setViewport({ width: 720, height: 1280 });
-
-    // Create subtitles in a format suitable for browser rendering
-    const subtitles = convertTranscriptionToWebSubtitles(transcription);
-
-    // Read audio file as base64 to embed in the page
-    const audioBase64 = await readFile(absAudioPath, { encoding: 'base64' });
-
-    // Read the HTML template file
-    const templatePath = path.join(__dirname, 'webgl_video_template.html');
-    const htmlTemplate = await readFile(templatePath, 'utf-8');
-
-    // Replace template variables with actual values
-    const htmlContent = htmlTemplate
-      .replace('{{AUDIO_BASE64}}', audioBase64)
-      .replace('{{SUBTITLES_JSON}}', JSON.stringify(subtitles));
-
-    // Load HTML content
-    await page.setContent(htmlContent);
-
-    // Check if WebGL is available
-    const webGLAvailable = await page.evaluate(() => {
-      try {
-        const canvas = document.createElement('canvas');
-        const gl =
-          canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        return !!gl;
-      } catch (e) {
-        return false;
-      }
-    });
-
-    debug.info(`WebGL available: ${webGLAvailable}`);
-
-    if (!webGLAvailable) {
-      debug.error('WebGL is not available in the headless browser');
-      await browser.close();
-      return false;
+    // Generate SRT file from transcription
+    debug.info('Checking transcription data...');
+    if (!transcription) {
+      debug.error('Transcription is null or undefined');
+      // Just use the video without captions
+      await fs.promises.rename(tempVideoPath, outputVideoPath);
+      return true;
     }
 
-    // Set up frame capturing
-    let frameIndex = 0;
-    let isComplete = false;
-    
-    // Expose functions to the page
-    await page.exposeFunction(
-      'captureFrame',
-      async (frameNum, currentTime, duration) => {
-        // Capture every 3rd frame (10fps) to reduce CPU usage
-        if (frameNum % 3 === 0) {
-          const framePath = path.join(
-            videoFramesDir,
-            `frame_${String(frameIndex).padStart(6, '0')}.png`,
-          );
-          await page.screenshot({ path: framePath, type: 'png' });
-          frameIndex++;
+    if (!transcription.words) {
+      debug.error('Transcription.words is null or undefined');
+      // Just use the video without captions
+      await fs.promises.rename(tempVideoPath, outputVideoPath);
+      return true;
+    }
 
-          // Log progress every 30 frames
-          if (frameIndex % 30 === 0) {
-            const progress = Math.floor((currentTime / duration) * 100);
-            debug.info(`WebGL rendering progress: ${progress}%`);
-          }
-        }
-      },
+    if (!Array.isArray(transcription.words)) {
+      debug.error(
+        `Transcription.words is not an array: ${typeof transcription.words}`,
+      );
+      // Just use the video without captions
+      await fs.promises.rename(tempVideoPath, outputVideoPath);
+      return true;
+    }
+
+    debug.info(
+      `Transcription words array length: ${transcription.words.length}`,
     );
 
-    await page.exposeFunction('animationComplete', async () => {
-      isComplete = true;
-    });
+    const srtContent = generateSrtContent(transcription.words);
+    debug.info(`SRT content generated: ${srtContent ? 'Yes' : 'No'}`);
 
-    // Wait for animation to complete
-    await page.evaluate(() => {
-      return new Promise((resolve) => {
-        const checkComplete = setInterval(() => {
-          if (document.getElementById('audio').ended) {
-            clearInterval(checkComplete);
+    // Only proceed with captions if we have valid SRT content
+    if (srtContent) {
+      await fs.promises.writeFile(srtPath, srtContent);
+      debug.info(`Generated SRT caption file at: ${srtPath}`);
+
+      // Use fluent-ffmpeg instead of spawn
+      debug.info(`Adding subtitles to video using FFmpeg`);
+
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg(tempVideoPath)
+          .videoFilters(
+            `subtitles=${srtPath}:force_style='FontName=Roboto,FontSize=28,PrimaryColour=&HFFFFFF,Bold=1,BorderStyle=1,Outline=1.5,Shadow=1,Alignment=2,MarginV=50'`,
+            // `subtitles=${srtPath}:force_style='FontSize=24,FontName=Arial,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=3,Outline=1'`,
+          )
+          .output(outputVideoPath)
+          .on('progress', (progress) => {
+            if (progress.percent) {
+              debug.info(`FFmpeg progress: ${progress.percent.toFixed(1)}%`);
+            }
+          })
+          .on('end', () => {
+            debug.info('FFmpeg process completed successfully');
             resolve();
-          }
-        }, 1000);
+          })
+          .on('error', (err) => {
+            reject(
+              new Error(`Failed to process video with FFmpeg: ${err.message}`),
+            );
+          })
+          .run();
       });
-    });
 
-    // Close browser
-    await browser.close();
+      // Clean up temporary files
+      await fs.promises.unlink(tempVideoPath);
+      await fs.promises.unlink(srtPath);
+    } else {
+      // If no valid SRT content, just rename the temp video to the final output
+      debug.info(
+        'No valid transcription words found, using video without captions',
+      );
+      await fs.promises.rename(tempVideoPath, outputVideoPath);
+    }
 
-    return new Promise((resolve, reject) => {
-      ffmpeg()
-        .input(framesPattern)
-        .inputFPS(10)
-        .input(absAudioPath)
-        .outputOptions([
-          '-c:v',
-          'libx264',
-          '-c:a',
-          'aac',
-          '-pix_fmt',
-          'yuv420p',
-          '-shortest',
-        ])
-        .output(absOutputPath)
-        .on('start', (commandLine) => {
-          debug.info(`FFmpeg command: ${commandLine}`);
-        })
-        .on('progress', (progress) => {
-          debug.info(`FFmpeg progress: ${JSON.stringify(progress)}`);
-        })
-        .on('end', () => {
-          debug.info(`WebGL video generated successfully: ${absOutputPath}`);
-          debug.info(
-            `Checking if file exists: ${fs.existsSync(absOutputPath)}`,
-          );
-
-          // Clean up temp files
-          try {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-          } catch (err) {
-            debug.error(`Error cleaning up temp files: ${err}`);
-          }
-
-          resolve(true);
-        })
-        .on('error', (err) => {
-          debug.error(`Error creating WebGL video: ${err.message}`);
-          debug.error(`Command: ${err.method} ${err.path}`);
-          debug.error(`Exit code: ${err.exitCode}`);
-          reject(false);
-        })
-        .run();
-    });
-  } catch (err) {
-    debug.error(`WebGL video generation failed: ${err}`);
+    debug.info(`Podcast video successfully generated at: ${outputVideoPath}`);
+    return true;
+  } catch (error) {
+    debug.error(`Failed to generate podcast video with captions: ${error}`);
+    // If there's an error, try to at least save the base video if it exists
+    try {
+      if (fs.existsSync(tempVideoPath)) {
+        await fs.promises.rename(tempVideoPath, outputVideoPath);
+        debug.info(`Saved base video without captions at: ${outputVideoPath}`);
+        return true;
+      }
+    } catch (saveError) {
+      debug.error(`Failed to save base video: ${saveError}`);
+    }
     return false;
   }
-};
-
-/**
- * Convert transcription to a format suitable for web rendering
- */
-const convertTranscriptionToWebSubtitles = (
-  transcription: TranscriptionResponse,
-): Array<{ start: number; end: number; text: string }> => {
-  const { words } = transcription;
-  const subtitles: Array<{ start: number; end: number; text: string }> = [];
-  let currentSubtitle = '';
-  let lineStartTime = 0;
-  let lineEndTime = 0;
-  const maxLineLength = 40;
-
-  for (let i = 0; i < words!.length; i++) {
-    const word = words![i];
-
-    // Skip spacing type
-    if (word.type === 'spacing') continue;
-
-    // If this is the first word in the line, set the start time
-    if (currentSubtitle === '') {
-      lineStartTime = word.start;
-    }
-
-    // Add word to current line
-    currentSubtitle += (currentSubtitle ? ' ' : '') + word.text;
-    lineEndTime = word.end;
-
-    // If line is long enough or it's the last word, create a subtitle entry
-    if (
-      currentSubtitle.length >= maxLineLength ||
-      i === words!.length - 1 ||
-      (i < words!.length - 2 && words![i + 1].start - word.end > 1.0)
-    ) {
-      // Add subtitle entry
-      subtitles.push({
-        start: lineStartTime,
-        end: lineEndTime,
-        text: currentSubtitle,
-      });
-
-      currentSubtitle = '';
-    }
-  }
-
-  return subtitles;
 };

@@ -56,6 +56,11 @@ export const generatePodcastAudio = async (
       };
     });
 
+  // Save the original script lines to a file for later reference
+  const scriptPath = path.join(outputDir, 'original_script.json');
+  await writeFile(scriptPath, JSON.stringify({ lines }, null, 2));
+  debug.info(`Original script saved to ${scriptPath}`);
+
   // Generate audio for each speaker's lines
   const audioFiles: string[] = [];
   for (const [index, line] of lines.entries()) {
@@ -135,10 +140,30 @@ export const generatePodcastAudio = async (
   // Perform transcription
   try {
     debug.info('Starting audio transcription...');
-    transcription = await transcribeAudio(apiKey, outputPath);
-    // debug.verbose(JSON.stringify(transcription, null, 2));
+    // Get the raw transcription with accurate timings
+    const rawTranscription = await transcribeAudio(apiKey, outputPath);
 
-    // Save the full transcription data (including word timing) to a JSON file
+    // Combine original script text with transcription timings
+    debug.verbose(rawTranscription.words);
+    try {
+      transcription = await alignScriptWithTranscription(
+        rawTranscription,
+        lines,
+      );
+      debug.verbose(transcription.words);
+    } catch {
+      debug.info('Falling back to raw transcription');
+      transcription = rawTranscription;
+    }
+
+    // Save both transcriptions for reference
+    const rawTranscriptionPath = path.join(outputDir, 'raw_transcription.json');
+    await writeFile(
+      rawTranscriptionPath,
+      JSON.stringify(rawTranscription, null, 2),
+    );
+
+    // Save the aligned transcription data to a JSON file
     const transcriptionDataPath = path.join(outputDir, 'transcription.json');
     await writeFile(
       transcriptionDataPath,
@@ -226,4 +251,179 @@ export const transcribeAudio = async (
     }
     throw error;
   }
+};
+
+/**
+ * Uses Claude to align the original script with the transcription timings
+ * by correcting only the words while preserving punctuation and spacing
+ *
+ * @param rawTranscription - The transcription result from Eleven Labs with word timings
+ * @param originalLines - The original script lines with correct text
+ * @returns A transcription with the original script text but with accurate timing
+ */
+export const alignScriptWithTranscription = async (
+  rawTranscription: TranscriptionResponse,
+  originalLines: { speaker: string; text: string }[],
+): Promise<TranscriptionResponse> => {
+  const debug = Debugger.getInstance();
+  debug.info(
+    'Correcting transcription words using Claude while preserving formatting',
+  );
+
+  if (!rawTranscription.words || rawTranscription.words.length === 0) {
+    debug.error('Raw transcription does not contain word timings');
+    return rawTranscription;
+  }
+
+  // Declare correctedWords at function scope
+  let correctedWords;
+
+  try {
+    const { createAnthropic } = await import('@ai-sdk/anthropic');
+    const { generateText: aiGenerateText } = await import('ai');
+    const { getSecrets } = await import('@/utils/secrets');
+
+    // Concatenate all original lines into one string
+    const originalText = originalLines.map((line) => line.text).join(' ');
+
+    // Include both raw text and word-by-word timing data for Claude
+    const rawText = rawTranscription.text;
+    const wordTimings = rawTranscription.words.map((word) => {
+      return {
+        text: word.text,
+        start: word.start,
+        end: word.end,
+        type: word.type,
+      };
+    });
+
+    // Get API key from secrets manager
+    const { anthropicApiKey } = getSecrets();
+    const anthropic = createAnthropic({
+      apiKey: anthropicApiKey,
+    });
+
+    const system = `You are a precise audio transcription correction assistant. Your task is to fix word choice errors in transcription while preserving all timing data exactly. You must return ONLY a valid JSON array of word objects with no additional text, explanations, or markdown formatting.`;
+
+    const prompt = `I have an original script and a machine transcription of the audio with timing data.
+
+# Original Script
+"""
+${originalText}
+"""
+
+# Raw Machine Transcription
+"""
+${rawText}
+"""
+
+# Machine Transcription with Word-Level Timing (JSON format)
+${JSON.stringify(wordTimings, null, 2)}
+
+Your task is to create a corrected version that:
+1. Uses ONLY the words from the Original Script when there are errors in the transcription
+2. PRESERVES the exact timing data (start:end times) from each word in the Machine Transcription
+3. MAINTAINS all original punctuation, capitalization, and sentence structure
+4. DOES NOT change the number of words or their order - only replaces incorrect words with the correct ones from the script
+5. Preserves the exact formatting of sentences including spaces
+
+For each word in the machine transcription:
+- If the word is correctly transcribed, keep it as is with its timing
+- If the word is incorrect, find the corresponding correct word from the original script but keep original timing
+
+IMPORTANT: You must return ONLY a valid JSON array of corrected words with no additional text, explanations, or markdown formatting. Do not use code blocks, just return the raw JSON array. The format must be exactly:
+
+[
+  {
+    "text": "corrected_word", 
+    "start": start_time,
+    "end": end_time,
+    "type": "word"
+  },
+  {
+    "text": "next_word",
+    "start": start_time,
+    "end": end_time,
+    "type": "word"
+  },
+  ...
+]
+
+Do not include any explanations, comments, or additional text before or after the JSON array. Your entire response must be valid JSON that can be directly parsed.`;
+
+    debug.info('Calling Claude to correct transcription words');
+
+    // Call Claude to fix the transcription
+    const { text: claudeResponse } = await aiGenerateText({
+      model: anthropic.languageModel('claude-3-5-sonnet-20241022'),
+      prompt,
+      system,
+      temperature: 0.1, // Very low temperature for consistent results
+      maxTokens: 8192,
+    });
+
+    // Add debug logging for Claude's response
+    debug.verbose('Claude raw response:', claudeResponse);
+
+    // Clean up the response and attempt to parse JSON
+    let cleanedResponse = claudeResponse.trim();
+    // Remove any potential markdown code block markers
+    cleanedResponse = cleanedResponse.replace(/```json\n?|\n?```/g, '');
+
+    try {
+      correctedWords = JSON.parse(cleanedResponse);
+    } catch (parseError: unknown) {
+      debug.error(
+        'Failed to parse Claude response as JSON:',
+        parseError instanceof Error ? parseError : String(parseError),
+      );
+      debug.error('Raw response that failed to parse:', cleanedResponse);
+      throw new Error(
+        `JSON parsing failed: ${
+          parseError instanceof Error ? parseError.message : String(parseError)
+        }`,
+      );
+    }
+
+    // Ensure we got an array of word objects
+    if (!Array.isArray(correctedWords) || correctedWords.length === 0) {
+      throw new Error('Response is not a valid array');
+    }
+
+    // Validate the structure of each word object
+    const validWordObjects = correctedWords.every(
+      (word) =>
+        typeof word.text === 'string' &&
+        typeof word.start === 'number' &&
+        typeof word.end === 'number' &&
+        typeof word.type === 'string',
+    );
+
+    if (!validWordObjects) {
+      throw new Error('Some word objects have invalid structure');
+    }
+  } catch (error) {
+    debug.error(
+      'Error using Claude for transcription correction:',
+      error as Error,
+    );
+    throw error;
+  }
+
+  // Now correctedWords is accessible here
+  const alignedWords: TranscriptionWord[] = correctedWords.map((word) => ({
+    text: word.text,
+    start: word.start,
+    end: word.end,
+    type: word.type,
+  }));
+
+  debug.info(
+    `Claude corrected ${alignedWords.length} words from the transcription based on original script`,
+  );
+
+  return {
+    text: rawTranscription.text,
+    words: alignedWords,
+  };
 };
