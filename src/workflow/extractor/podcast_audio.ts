@@ -16,6 +16,7 @@ export interface TranscriptionWord {
   start: number;
   end: number;
   type: string;
+  speaker?: string;
 }
 
 export interface TranscriptionResponse {
@@ -283,9 +284,6 @@ export const alignScriptWithTranscription = async (
     const { generateText: aiGenerateText } = await import('ai');
     const { getSecrets } = await import('@/utils/secrets');
 
-    // Concatenate all original lines into one string
-    const originalText = originalLines.map((line) => line.text).join(' ');
-
     // Include both raw text and word-by-word timing data for Claude
     const rawText = rawTranscription.text;
     const wordTimings = rawTranscription.words.map((word) => {
@@ -294,6 +292,7 @@ export const alignScriptWithTranscription = async (
         start: word.start,
         end: word.end,
         type: word.type,
+        speaker: word.speaker,
       };
     });
 
@@ -309,7 +308,7 @@ export const alignScriptWithTranscription = async (
 
 # Original Script
 """
-${originalText}
+${originalLines}
 """
 
 # Raw Machine Transcription
@@ -326,10 +325,15 @@ Your task is to create a corrected version that:
 3. MAINTAINS all original punctuation, capitalization, and sentence structure
 4. DOES NOT change the number of words or their order - only replaces incorrect words with the correct ones from the script
 5. Preserves the exact formatting of sentences including spaces
+6. ADDS the speaker information to each word based on which speaker said that word in the original script
+
+IMPORTANT: The only valid speakers are "MAX" and "PEPE". Every word MUST have one of these two speakers assigned.
 
 For each word in the machine transcription:
 - If the word is correctly transcribed, keep it as is with its timing
 - If the word is incorrect, find the corresponding correct word from the original script but keep original timing
+- Add the speaker who said that word based on the original script (must be either "MAX" or "PEPE")
+- Make sure to have the original punctuation, capitalization, and sentence structure
 
 IMPORTANT: You must return ONLY a valid JSON array of corrected words with no additional text, explanations, or markdown formatting. Do not use code blocks, just return the raw JSON array. The format must be exactly:
 
@@ -338,13 +342,15 @@ IMPORTANT: You must return ONLY a valid JSON array of corrected words with no ad
     "text": "corrected_word", 
     "start": start_time,
     "end": end_time,
-    "type": "word"
+    "type": "word",
+    "speaker": "SPEAKER_NAME"
   },
   {
     "text": "next_word",
     "start": start_time,
     "end": end_time,
-    "type": "word"
+    "type": "word",
+    "speaker": "SPEAKER_NAME"
   },
   ...
 ]
@@ -390,17 +396,21 @@ Do not include any explanations, comments, or additional text before or after th
       throw new Error('Response is not a valid array');
     }
 
-    // Validate the structure of each word object
+    // Validate the structure of each word object and ensure valid speakers
     const validWordObjects = correctedWords.every(
       (word) =>
         typeof word.text === 'string' &&
         typeof word.start === 'number' &&
         typeof word.end === 'number' &&
-        typeof word.type === 'string',
+        typeof word.type === 'string' &&
+        typeof word.speaker === 'string' &&
+        (word.speaker === 'MAX' || word.speaker === 'PEPE'),
     );
 
     if (!validWordObjects) {
-      throw new Error('Some word objects have invalid structure');
+      throw new Error(
+        'Some word objects have invalid structure or invalid speaker values',
+      );
     }
   } catch (error) {
     debug.error(
@@ -410,13 +420,23 @@ Do not include any explanations, comments, or additional text before or after th
     throw error;
   }
 
-  // Now correctedWords is accessible here
   const alignedWords: TranscriptionWord[] = correctedWords.map((word) => ({
     text: word.text,
     start: word.start,
     end: word.end,
     type: word.type,
+    speaker: word.speaker,
   }));
+
+  // Final validation to ensure all words have valid speakers
+  const allWordsHaveValidSpeakers = alignedWords.every(
+    (word) => word.speaker === 'MAX' || word.speaker === 'PEPE',
+  );
+
+  if (!allWordsHaveValidSpeakers) {
+    debug.error('Some words have invalid or missing speaker values');
+    throw new Error('Invalid speaker values in transcription');
+  }
 
   debug.info(
     `Claude corrected ${alignedWords.length} words from the transcription based on original script`,

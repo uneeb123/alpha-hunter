@@ -63,7 +63,7 @@ You are a news extraction system analyzing tweets to identify news stories. Past
 # Tweets to be analyzed
 {tweets}
 
-# Past Extracted Tweets
+# Past Extracted News
 {pastNews}
   
 Extract 5 distinct news items from the following tweets related to the topic: {topic}. For each news item:

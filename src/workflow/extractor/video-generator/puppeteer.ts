@@ -71,22 +71,6 @@ async function generateVideo(
           blue: 1.0,
         },
       },
-      {
-        time: 10,
-        colors: {
-          red: 0.3,
-          green: 0.6,
-          blue: 0.5,
-        },
-      },
-      {
-        time: 15,
-        colors: {
-          red: 0.8,
-          green: 0.2,
-          blue: 1.0,
-        },
-      },
     ],
   };
 
