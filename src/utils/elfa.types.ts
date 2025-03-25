@@ -96,11 +96,10 @@ export interface SearchMentionData {
   mentioned_at: string;
   type: string;
   metrics: {
-    likes: number;
-    replies: number;
-    reposts: number;
-    views?: number;
-    quotes?: number;
+    like_count: number;
+    reply_count: number;
+    repost_count: number;
+    view_count: number;
   };
   sentiment: 'positive' | 'negative' | 'netural';
 }

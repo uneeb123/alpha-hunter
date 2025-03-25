@@ -41,7 +41,7 @@ export class CryptoDetector {
       const response = await chain.invoke({ tweetContent: tweet.content });
       const answer = response.text.trim().toUpperCase();
 
-      this.debug.info(`Crypto check for tweet: ${answer}`);
+      this.debug.verbose(`Crypto check for tweet: ${answer}`);
       return answer === 'YES';
     } catch (error) {
       this.debug.error(`Error checking if tweet is crypto-related: ${error}`);

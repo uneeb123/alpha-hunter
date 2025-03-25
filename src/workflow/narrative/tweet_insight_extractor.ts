@@ -3,6 +3,8 @@ import { MentionData, ElfaClient } from '@/utils/elfa';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
+import { calculateEngagementScoreWithoutBookmarks } from './engagement_calculator';
+import { getUsernameById } from '@/utils/x';
 
 // Define an interface for the insight return type
 export interface TweetInsight {
@@ -98,7 +100,7 @@ export class TweetInsightExtractor {
 
     try {
       // Join keywords for search query
-      const keywordsString = keywords[0];
+      const keywordsString = keywords.join(', ');
       this.debug.info(
         `Searching for related mentions with keywords: ${keywordsString}`,
       );
@@ -112,15 +114,46 @@ export class TweetInsightExtractor {
         return 'No additional context found for these keywords.';
       }
 
-      this.debug.info(
-        `Found ${searchResponse.data.length} related mentions for analysis for ${keywordsString}`,
+      // Calculate engagement scores and sort mentions by score (highest first)
+      const scoredMentions = searchResponse.data.map((mention) => ({
+        mention,
+        score: calculateEngagementScoreWithoutBookmarks({
+          likeCount: mention.metrics.like_count,
+          replyCount: mention.metrics.reply_count,
+          repostCount: mention.metrics.repost_count,
+          viewCount: mention.metrics.view_count,
+        }),
+      }));
+
+      scoredMentions.sort((a, b) => b.score - a.score);
+
+      // Take only the top 10 mentions
+      const top10Mentions = scoredMentions.slice(0, 10);
+
+      // Get usernames for each mention
+      const mentionsWithUsernames = await Promise.all(
+        top10Mentions.map(async ({ mention, score }) => {
+          try {
+            const username = await getUsernameById(mention.twitter_user_id);
+            return { mention, score, username };
+          } catch (error) {
+            this.debug.error(
+              `Could not get username for ${mention.twitter_user_id}: ${error}`,
+            );
+            return { mention, score, username: mention.twitter_user_id };
+          }
+        }),
       );
 
-      // Format the related mentions for the LLM
-      const relatedMentions = searchResponse.data
+      this.debug.info(
+        `Found ${searchResponse.data.length} related mentions for analysis for ${keywordsString}, using top 10 by engagement score`,
+      );
+
+      // Format the related mentions for the LLM (now using usernames instead of IDs)
+      const relatedMentions = mentionsWithUsernames
         .map(
-          (mention) =>
-            `Tweet from @${mention.twitter_user_id}: ${mention.content}`,
+          ({ mention, username }) =>
+            `Tweet from @${username}: ${mention.content}`,
         )
         .join('\n\n');
 
@@ -130,20 +163,21 @@ export class TweetInsightExtractor {
       
       The main topic is: {headline}
       
-      Your task is to analyze these tweets and provide a concise, insightful summary of what's happening with these topics in the crypto space.
+      Your task is to analyze these tweets and provide a concise, factual summary of what's happening with these topics in the crypto space.
       
       Related tweets:
       """
       {relatedMentions}
       """
       
-      Write a concise 2-3 sentence analysis that captures key facts about these topics. Include specific quotes or references to sources when possible (e.g., "According to @username...").
+      Extract key factual information and present it as bullet points. Include specific quotes or references to sources when possible.
       
       IMPORTANT: 
       - Focus only on factual information, not speculation
-      - Directly reference the source of information using only usernames (e.g., @username)
       - Only consider tweets that are directly relevant to the headline
-      - If none of the tweets are relevant to the headline, state that there is insufficient relevant information available
+      - Present information as direct bullet points without introductory phrases
+      - Extract as much factual information as possible from the tweets
+      - Do not start with "Based on the tweets provided" or similar phrases
       `);
 
       const chain = RunnableSequence.from([analysisPrompt, this.model]);

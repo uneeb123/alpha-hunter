@@ -2,7 +2,7 @@ import { Debugger, DebugConfig } from '@/utils/debugger';
 import { ElfaClient, MentionData } from '@/utils/elfa';
 import { getSecrets } from '@/utils/secrets';
 import { ChatAnthropic } from '@langchain/anthropic';
-import { calculateEngagementScore } from './engagement_calculator';
+import { calculateEngagementScoreFromTweet } from './engagement_calculator';
 import { CryptoDetector } from './crypto_detector';
 import { TweetInsightExtractor } from './tweet_insight_extractor';
 
@@ -79,7 +79,8 @@ export class ElfaExtractor {
           if (isCrypto) {
             // Calculate and add engagement score to the tweet object
             const enhancedTweet = tweet as EnhancedMentionData;
-            enhancedTweet.engagementScore = calculateEngagementScore(tweet);
+            enhancedTweet.engagementScore =
+              calculateEngagementScoreFromTweet(tweet);
             return enhancedTweet;
           }
           return null;
@@ -98,26 +99,20 @@ export class ElfaExtractor {
         return b.engagementScore - a.engagementScore; // Higher scores first
       });
 
-      // Take top 3 tweets by engagement score
-      const topTweets = sortedTweets.slice(0, Math.min(3, sortedTweets.length));
-      this.debug.info(`Selected top ${topTweets.length} tweets by engagement`);
+      this.debug.verbose(sortedTweets);
 
-      this.debug.verbose(topTweets);
+      const selectedTweet = sortedTweets[0];
 
-      // Extract insights from each of the top 3 tweets individually
-      if (topTweets.length > 0) {
-        this.debug.info('Extracting insights from top tweets individually...');
-        const insights = await Promise.all(
-          topTweets.map((tweet) =>
-            this.insightExtractor.extractInsightFromTweet(tweet),
-          ),
+      if (selectedTweet) {
+        // Extract insights from the selected product announcement tweet
+        this.debug.info(
+          'Extracting insights from product announcement tweet...',
         );
-        // Convert the TweetInsight objects to formatted strings before joining
-        const insightStrings = insights.map(
-          (insight) =>
-            `Headline: ${insight.headline}\nKeywords: ${insight.keywords.join(', ')}\nSentiment: ${insight.sentiment}\nSource: ${insight.source}\nAnalysis: ${insight.analysis}`,
-        );
-        return insightStrings.join('\n\n');
+        const insight =
+          await this.insightExtractor.extractInsightFromTweet(selectedTweet);
+
+        // Convert the TweetInsight object to a formatted string
+        return `Headline: ${insight.headline}\nKeywords: ${insight.keywords.join(', ')}\nSentiment: ${insight.sentiment}\nSource: ${insight.source}\nAnalysis: ${insight.analysis}`;
       } else {
         return 'No crypto-related tweets found matching the criteria.';
       }
