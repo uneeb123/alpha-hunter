@@ -42,16 +42,16 @@ const main = async (): Promise<void> => {
     // debug.info('Top mentions response:', topMentionsResponse);
 
     // // Test search-mentions endpoint
-    // debug.info('Testing search-mentions endpoint...');
-    // const searchResponse = await elfaClient.searchMentions({
-    //   keywords: 'ai agent',
-    // });
-    // debug.info('Search mentions response:', searchResponse);
+    debug.info('Testing search-mentions endpoint...');
+    const searchResponse = await elfaClient.searchMentions({
+      keywords: 'World Liberty Financial',
+    });
+    debug.info('Search mentions response:', searchResponse);
 
     // // Test trending-tokens endpoint
-    debug.info('Testing trending-tokens endpoint...');
-    const trendingTokensResponse = await elfaClient.getTrendingTokens();
-    debug.info('Trending tokens response:', trendingTokensResponse);
+    // debug.info('Testing trending-tokens endpoint...');
+    // const trendingTokensResponse = await elfaClient.getTrendingTokens();
+    // debug.info('Trending tokens response:', trendingTokensResponse);
 
     // // Test account-smart-stats endpoint
     // debug.info('Testing account-smart-stats endpoint...');

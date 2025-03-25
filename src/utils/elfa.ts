@@ -99,9 +99,9 @@ export class ElfaClient {
   }: {
     limit?: number;
     offset?: number;
-  } = {}): Promise<ElfaResponse<MentionsResponse>> {
+  } = {}): Promise<MentionsResponse> {
     try {
-      const response = await axios.get<ElfaResponse<MentionsResponse>>(
+      const response = await axios.get<MentionsResponse>(
         `${this.baseUrl}/mentions`,
         {
           headers: {
@@ -165,17 +165,15 @@ export class ElfaClient {
     keywords,
     from = Math.floor(Date.now() / 1000) - 86400,
     to = Math.floor(Date.now() / 1000),
-    limit = 20,
-    page = 1,
+    limit = 30,
   }: {
     keywords: string;
     from?: number;
     to?: number;
     limit?: number;
-    page?: number;
-  }): Promise<ElfaResponse<SearchMentionsResponse>> {
+  }): Promise<SearchMentionsResponse> {
     try {
-      const response = await axios.get<ElfaResponse<SearchMentionsResponse>>(
+      const response = await axios.get<SearchMentionsResponse>(
         `${this.baseUrl}/mentions/search`,
         {
           headers: {
@@ -183,11 +181,10 @@ export class ElfaClient {
             'x-elfa-api-key': this.apiKey,
           },
           params: {
-            keywords: encodeURIComponent(keywords),
+            keywords,
             from,
             to,
             limit,
-            page,
           },
         },
       );

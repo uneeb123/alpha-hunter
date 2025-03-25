@@ -70,6 +70,7 @@ export interface MentionData {
 }
 
 export interface MentionsResponse {
+  success: boolean;
   data: MentionData[];
   metadata: {
     total: number;
@@ -105,6 +106,7 @@ export interface SearchMentionData {
 }
 
 export interface SearchMentionsResponse {
+  success: boolean;
   data: SearchMentionData[];
   metadata: {
     total: number;
