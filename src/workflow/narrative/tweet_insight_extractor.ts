@@ -13,6 +13,7 @@ export interface TweetInsight {
   sentiment: string;
   source: string;
   analysis: string;
+  mentionUsers: string[];
 }
 
 export class TweetInsightExtractor {
@@ -49,10 +50,13 @@ export class TweetInsightExtractor {
     
     CRITICAL INSTRUCTION: You must include EXACTLY 1 or 2 keywords total in the keywords array. Never include more than 2 keywords. Choose only the most essential terms that represent the core topic.
     
-    IMPORTANT: 
-    - Keywords must be proper nouns (specific names, projects, entities, protocols), not actions or verbs
-    - Avoid generic keywords like "bitcoin", "crypto", "cryptocurrency", "BTC", "DeFi", "NFT" or "blockchain"
-    - Instead, use specific project names, technologies, or concepts mentioned in the tweet (e.g., "Kaito", "Bored Apes", "Uniswap")
+    EXTREMELY IMPORTANT - DO NOT USE ANY OF THESE GENERIC KEYWORDS:
+    - "bitcoin", "crypto", "cryptocurrency", "btc", "defi", "nft", "blockchain", "web3", "ethereum", "solana"
+    
+    Instead, you MUST use specific project names, technologies, or concepts mentioned in the tweet.
+    Examples of good specific keywords: "Kaito", "Bored Apes", "Uniswap", "Pumpfun", "Aave", etc.
+    
+    If no specific projects or technologies are mentioned, use the names of people, companies, or specific events mentioned.
     
     Provide ONLY the JSON with no additional text or explanation.
     `);
@@ -68,10 +72,11 @@ export class TweetInsightExtractor {
       const tweetUrl = `https://x.com${tweet.originalUrl}`;
 
       // Generate analysis based on keywords and headline
-      const analysis = await this.generateAnalysisFromKeywords(
-        insightData.keywords,
-        insightData.headline,
-      );
+      const { analysis, mentionUsers } =
+        await this.generateAnalysisFromKeywords(
+          insightData.keywords,
+          insightData.headline,
+        );
 
       return {
         headline: insightData.headline,
@@ -79,6 +84,7 @@ export class TweetInsightExtractor {
         sentiment: insightData.sentiment,
         source: tweetUrl,
         analysis: analysis,
+        mentionUsers: mentionUsers,
       };
     } catch (error: unknown) {
       const parseError = error as Error;
@@ -93,9 +99,12 @@ export class TweetInsightExtractor {
   private async generateAnalysisFromKeywords(
     keywords: string[],
     headline: string,
-  ): Promise<string> {
+  ): Promise<{ analysis: string; mentionUsers: string[] }> {
     if (!keywords || keywords.length === 0) {
-      return 'No analysis available due to missing keywords.';
+      return {
+        analysis: 'No analysis available due to missing keywords.',
+        mentionUsers: [],
+      };
     }
 
     try {
@@ -111,7 +120,10 @@ export class TweetInsightExtractor {
       });
 
       if (!searchResponse.data || searchResponse.data.length === 0) {
-        return 'No additional context found for these keywords.';
+        return {
+          analysis: 'No additional context found for these keywords.',
+          mentionUsers: [],
+        };
       }
 
       // Calculate engagement scores and sort mentions by score (highest first)
@@ -157,6 +169,9 @@ export class TweetInsightExtractor {
         )
         .join('\n\n');
 
+      // Extract just the usernames from mentionsWithUsernames
+      const mentionUsers = mentionsWithUsernames.map((item) => item.username);
+
       // Create a prompt for the LLM to generate an analysis
       const analysisPrompt = PromptTemplate.fromTemplate(`
       You are a cryptocurrency market analyst. I'll provide you with several tweets related to the keywords: {keywords}.
@@ -188,10 +203,16 @@ export class TweetInsightExtractor {
         relatedMentions,
       });
 
-      return response.text.trim();
+      return {
+        analysis: response.text.trim(),
+        mentionUsers: mentionUsers,
+      };
     } catch (error) {
       this.debug.error(`Error generating analysis from keywords: ${error}`);
-      return 'Analysis unavailable due to processing error.';
+      return {
+        analysis: 'Analysis unavailable due to processing error.',
+        mentionUsers: [],
+      };
     }
   }
 }

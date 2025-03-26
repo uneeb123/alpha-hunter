@@ -2,7 +2,7 @@ import { TwitterApi } from 'twitter-api-v2';
 import * as fs from 'fs/promises';
 import { Debugger } from '@/utils/debugger';
 import { PrismaClient } from '@prisma/client';
-import { ApiResponseError } from 'twitter-api-v2';
+import { ApiResponseError, TweetV2PostTweetResult } from 'twitter-api-v2';
 
 export class TweetsManager {
   private client: TwitterApi;
@@ -38,7 +38,7 @@ export class TweetsManager {
   async postTweetWithMedia(
     processorId: number,
     content: string,
-  ): Promise<void> {
+  ): Promise<TweetV2PostTweetResult> {
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 10000; // 10 seconds
 
@@ -100,13 +100,13 @@ export class TweetsManager {
 
         // Post tweet with the uploaded media
         console.log('Posting tweet with media...');
-        await this.client.v2.tweet({
+        const response = await this.client.v2.tweet({
           text: content,
           media: { media_ids: [mediaId] },
         });
 
         console.log('Tweet posted successfully');
-        return; // Success - exit the retry loop
+        return response; // Success - exit the retry loop
       } catch (error) {
         console.error(`Attempt ${attempt} failed:`, {
           error,
@@ -124,6 +124,29 @@ export class TweetsManager {
         console.log(`Waiting ${RETRY_DELAY / 1000} seconds before retry...`);
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       }
+    }
+
+    // Add a default return or throw if all retries fail
+    throw new Error('All tweet posting attempts failed');
+  }
+
+  async replyToTweet(
+    tweetId: string,
+    content: string,
+  ): Promise<TweetV2PostTweetResult> {
+    try {
+      console.log(`Replying to tweet ${tweetId} with content: ${content}`);
+      const response = await this.client.v2.reply(content, tweetId);
+      console.log('Reply posted successfully');
+      return response;
+    } catch (error) {
+      console.error('Error replying to tweet:', {
+        error,
+        message: (error as Error)?.message,
+        code: (error as ApiResponseError)?.code,
+        data: (error as ApiResponseError)?.data,
+      });
+      throw error;
     }
   }
 }

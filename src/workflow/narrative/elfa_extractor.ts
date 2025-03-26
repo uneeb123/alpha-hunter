@@ -1,10 +1,17 @@
 import { Debugger, DebugConfig } from '@/utils/debugger';
 import { ElfaClient, MentionData } from '@/utils/elfa';
-import { getSecrets } from '@/utils/secrets';
+import { getSecrets, Secrets } from '@/utils/secrets';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { calculateEngagementScoreFromTweet } from './engagement_calculator';
 import { CryptoDetector } from './crypto_detector';
-import { TweetInsightExtractor } from './tweet_insight_extractor';
+import { TweetInsightExtractor, TweetInsight } from './tweet_insight_extractor';
+import { generatePodcastScript } from '@/workflow/extractor/podcast_script_client';
+import {
+  generatePodcastAudio,
+  generatePodcastVideo,
+} from '@/workflow/extractor/podcast_client';
+import { TweetsManager } from '@/workflow/extractor/tweets_manager';
+import { VectorStore } from '@/utils/vector_store';
 
 // Extended type that includes engagement score
 export interface EnhancedMentionData extends MentionData {
@@ -14,15 +21,8 @@ export interface EnhancedMentionData extends MentionData {
 export interface ElfaExtractorOptions {
   limit: number;
   debugConfig?: DebugConfig;
-}
-
-// Define an interface for the insight return type
-export interface TweetInsight {
-  headline: string;
-  keywords: string[];
-  sentiment: string;
-  source: string;
-  analysis: string;
+  generatePodcast?: boolean;
+  dryRun?: boolean;
 }
 
 export class ElfaExtractor {
@@ -31,6 +31,9 @@ export class ElfaExtractor {
   private debug: Debugger;
   private cryptoDetector: CryptoDetector;
   private insightExtractor: TweetInsightExtractor;
+  private secrets: Secrets;
+  private processorId: number;
+  private vectorStore!: VectorStore;
 
   constructor(private options: ElfaExtractorOptions) {
     this.debug = Debugger.create(
@@ -39,9 +42,9 @@ export class ElfaExtractor {
     this.elfaClient = new ElfaClient(options.debugConfig);
 
     // Initialize ChatAnthropic model instead of direct Anthropic client
-    const secrets = getSecrets();
+    this.secrets = getSecrets();
     this.model = new ChatAnthropic({
-      anthropicApiKey: secrets.anthropicApiKey,
+      anthropicApiKey: this.secrets.anthropicApiKey,
       modelName: 'claude-3-sonnet-20240229',
       temperature: 0.3,
     });
@@ -55,10 +58,18 @@ export class ElfaExtractor {
       this.elfaClient,
       this.debug,
     );
+
+    // Generate a random processor ID between 999 and 999999
+    this.processorId = Math.floor(Math.random() * (999999 - 999 + 1)) + 999;
   }
 
   public async run(): Promise<string> {
     try {
+      // Initialize vector store
+      this.vectorStore = await VectorStore.getInstance(
+        this.secrets.openaiApiKey,
+      );
+
       // Get mentions from the API
       const mentionsResponse = await this.elfaClient.getMentions({
         limit: this.options.limit,
@@ -101,7 +112,8 @@ export class ElfaExtractor {
 
       this.debug.verbose(sortedTweets);
 
-      const selectedTweet = sortedTweets[0];
+      // Instead of just selecting the first tweet, find the most unique one
+      const selectedTweet = await this.findMostUniqueTweet(sortedTweets);
 
       if (selectedTweet) {
         // Extract insights from the selected product announcement tweet
@@ -111,6 +123,12 @@ export class ElfaExtractor {
         const insight =
           await this.insightExtractor.extractInsightFromTweet(selectedTweet);
 
+        // Save the insight headline to the vector store
+        await this.saveInsightToVectorStore(insight);
+
+        // Generate podcast if option is enabled
+        await this.createPodcast(insight);
+
         // Convert the TweetInsight object to a formatted string
         return `Headline: ${insight.headline}\nKeywords: ${insight.keywords.join(', ')}\nSentiment: ${insight.sentiment}\nSource: ${insight.source}\nAnalysis: ${insight.analysis}`;
       } else {
@@ -119,6 +137,158 @@ export class ElfaExtractor {
     } catch (error) {
       this.debug.error(`Failed to extract insights: ${error}`);
       throw error;
+    }
+  }
+
+  private async findMostUniqueTweet(
+    topTweets: EnhancedMentionData[],
+  ): Promise<EnhancedMentionData | null> {
+    if (topTweets.length === 0) return null;
+
+    this.debug.info(
+      `Finding most unique tweet among top ${topTweets.length} tweets`,
+    );
+
+    // For each tweet, check similarity with existing content in vector store
+    const uniquenessScores = await Promise.all(
+      topTweets.map(async (tweet) => {
+        try {
+          // Search for similar content in vector store with a similarity threshold
+          const similarDocuments = await this.vectorStore.similaritySearch(
+            tweet.content,
+            3,
+            { scoreThreshold: 0.8 }, // Only consider documents with 80% or higher similarity
+          );
+
+          // If no similar documents found, this is very unique
+          if (similarDocuments.length === 0) return { tweet, uniqueness: 1.0 };
+
+          // Calculate average uniqueness (lower number of similar docs means more unique)
+          const uniqueness = 1.0 - similarDocuments.length / 3;
+
+          return { tweet, uniqueness };
+        } catch (error) {
+          this.debug.error(`Error calculating uniqueness for tweet: ${error}`);
+          // Default to medium uniqueness on error
+          return { tweet, uniqueness: 0.5 };
+        }
+      }),
+    );
+
+    // Sort by uniqueness (higher is better)
+    uniquenessScores.sort((a, b) => {
+      // Primary sort by uniqueness
+      if (b.uniqueness !== a.uniqueness) {
+        return b.uniqueness - a.uniqueness;
+      }
+      // Secondary sort by engagement score
+      return b.tweet.engagementScore - a.tweet.engagementScore;
+    });
+
+    this.debug.info(
+      `Selected most unique tweet with uniqueness score: ${uniquenessScores[0]?.uniqueness}`,
+    );
+
+    return uniquenessScores[0]?.tweet || topTweets[0];
+  }
+
+  private async saveInsightToVectorStore(insight: TweetInsight): Promise<void> {
+    try {
+      const { headline } = insight;
+
+      // Create a document to store in the vector database
+      const document = {
+        pageContent: headline,
+        metadata: {
+          type: 'news_item',
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+      await this.vectorStore.addDocuments([document]);
+      this.debug.info(`Saved insight "${headline}" to vector store`);
+    } catch (error) {
+      this.debug.error(`Failed to save insight to vector store: ${error}`);
+      // Don't throw to allow the process to continue
+    }
+  }
+
+  private async createPodcast(insight: TweetInsight): Promise<void> {
+    try {
+      this.debug.info('Generating podcast script...');
+
+      // Use insight.analysis for tweets content
+      const tweetsContent = insight.analysis;
+
+      // Use insight.headline for relevant topics
+      const relevantTopics = insight.headline;
+
+      // Generate the podcast script
+      const script = await generatePodcastScript(
+        tweetsContent,
+        relevantTopics,
+        true,
+      );
+
+      this.debug.info('Generated podcast script');
+      this.debug.verbose(script);
+
+      // Generate podcast audio
+      const transcription = await generatePodcastAudio(
+        this.secrets.elevenLabsApiKey,
+        script,
+        this.processorId,
+      );
+      this.debug.info('Generated podcast audio');
+
+      // Generate podcast video
+      await generatePodcastVideo(this.processorId, transcription);
+      this.debug.info('Generated podcast video');
+
+      // Post to Twitter if not a dry run
+      if (!this.options.dryRun) {
+        await this.postToTwitter(insight.headline, insight.mentionUsers);
+      } else {
+        this.debug.info('Skipping Twitter post (dry run)');
+      }
+
+      this.debug.info('Podcast creation and posting completed');
+    } catch (error) {
+      this.debug.error(`Failed to create podcast: ${error}`);
+      // Don't throw the error to allow the rest of the process to continue
+    }
+  }
+
+  private async postToTwitter(
+    headline: string,
+    sources: string[],
+  ): Promise<void> {
+    try {
+      const tweetsManager = new TweetsManager(
+        this.secrets.twitterApiKey,
+        this.secrets.twitterApiSecret,
+        this.secrets.twitterAccessToken,
+        this.secrets.twitterAccessSecret,
+      );
+
+      const response = await tweetsManager.postTweetWithMedia(
+        this.processorId,
+        headline,
+      );
+      console.log(response.data.id);
+
+      const uniqueSources = [...new Set(sources)];
+      // Filter out sources that are just numbers
+      const validSources = uniqueSources.filter(
+        (source) => !/^\d+$/.test(source),
+      );
+      await tweetsManager.replyToTweet(
+        response.data.id,
+        `Sources: ${validSources.map((source) => `@${source}`).join(' ')}`,
+      );
+      this.debug.info('Posted tweet with podcast media');
+    } catch (error) {
+      this.debug.error(`Failed to post to Twitter: ${error}`);
     }
   }
 }

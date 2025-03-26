@@ -91,11 +91,35 @@ export class VectorStore {
   public async similaritySearch(
     query: string,
     k: number = 5,
+    options?: { scoreThreshold?: number },
   ): Promise<Document[]> {
     try {
       const filter = (doc: Document) => doc.metadata?.type === 'news_item';
-      const results = await this.vectorStore.similaritySearch(query, k, filter);
-      this.debug.info(`Found ${results.length} similar news items`);
+
+      // First get results with scores
+      const resultsWithScores =
+        await this.vectorStore.similaritySearchWithScore(query, k, filter);
+
+      // Apply score threshold if provided
+      let results: Document[];
+      if (options?.scoreThreshold !== undefined) {
+        // Filter by threshold and extract just the documents
+        results = resultsWithScores
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .filter(([_, score]) => score >= options.scoreThreshold!)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .map(([doc, _]) => doc);
+
+        this.debug.info(
+          `Found ${resultsWithScores.length} similar items, ${results.length} above threshold ${options.scoreThreshold}`,
+        );
+      } else {
+        // Just extract the documents without filtering
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        results = resultsWithScores.map(([doc, _]) => doc);
+        this.debug.info(`Found ${results.length} similar news items`);
+      }
+
       return results;
     } catch (error) {
       this.debug.error('Error searching vector store:', error as Error);

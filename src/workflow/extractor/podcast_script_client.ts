@@ -1,16 +1,17 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createOpenAI } from '@ai-sdk/openai';
 import { generateText as aiGenerateText } from 'ai';
+import { getSecrets } from '../../utils/secrets';
 
 // TODO: do we need focus area/alpha since it's coming from the summary
 export const generatePodcastScript = async (
-  apiKey: string,
   tweets: string,
   relevantTopics: string,
+  useOpenAI: boolean = false,
 ) => {
-  const anthropic = createAnthropic({
-    apiKey,
-  });
+  const secrets = getSecrets();
 
+  // System prompt is the same for both models
   const system = `You are a podcast script generator of a Crypto meets AI podcast show called "The Max Market Show".
 "The Max Market Show" focuses on educating and empowering individuals to navigate the crypto landscape.
 There are two speakers involved: Max Market and Pepe the Frog.
@@ -35,7 +36,7 @@ Max Market has all the insights and updates.
 ## Pepe the Frog
 Pepe is a laid-back internet icon and the host on the podcast.  
 He started as a humble comic book character but evolved into a cultural phenomenon.  
-Pepe lives by the motto *“Feels good, man”*—but his moods can shift with the markets.  
+Pepe lives by the motto *"Feels good, man"*—but his moods can shift with the markets.  
 Sometimes a savvy trader, sometimes a doomposter, Pepe represents the highs and lows of speculation.  
 Whether celebrating a bull run or lamenting a rug pull, Pepe always keeps it real.`;
 
@@ -45,7 +46,8 @@ Whether celebrating a bull run or lamenting a rug pull, Pepe always keeps it rea
 - Max Market (guest) is the seasoned trader who's seen it all. He explains big trades, market moves, and trends in a way that even a degen can understand.
 - Use plain, American English—but sprinkle in crypto slang, internet culture references, and Pepe-isms where it makes sense.
 - MAKE IT FUNNY
-- NO ASTERISKS IN THE SCRIPT`;
+- NO ASTERISKS OR ACTIONS IN THE SCRIPT - NO *wipes tear* or similar expressions
+- ONLY DIALOGUE - NO ACTION DESCRIPTIONS`;
 
   const prompt =
     `# Task: ${task}\n\n` +
@@ -57,17 +59,37 @@ Whether celebrating a bull run or lamenting a rug pull, Pepe always keeps it rea
     `\n\n# Tweets\n\n${tweets}\n\n` +
     `\n\n# Example\n\n${example}`;
 
-  const { text: anthropicResponse } = await aiGenerateText({
-    model: anthropic.languageModel('claude-3-5-sonnet-20241022'),
-    prompt,
-    system,
-    temperature: 0.7,
-    maxTokens: 8192,
-    frequencyPenalty: 0.4,
-    presencePenalty: 0.4,
-  });
+  if (useOpenAI && secrets.openaiApiKey) {
+    // Use OpenAI GPT-4-Turbo with AI SDK
+    const openai = createOpenAI({
+      apiKey: secrets.openaiApiKey,
+    });
 
-  return anthropicResponse;
+    const { text: openaiResponse } = await aiGenerateText({
+      model: openai.chat('gpt-4-turbo'),
+      prompt,
+      system,
+      temperature: 0.3,
+      maxTokens: 4096,
+    });
+
+    return openaiResponse;
+  } else {
+    // Use Anthropic Claude
+    const anthropic = createAnthropic({
+      apiKey: secrets.anthropicApiKey,
+    });
+
+    const { text: anthropicResponse } = await aiGenerateText({
+      model: anthropic.languageModel('claude-3-5-sonnet-20241022'),
+      prompt,
+      system,
+      temperature: 0.7,
+      maxTokens: 8192,
+    });
+
+    return anthropicResponse;
+  }
 };
 
 const example = `PEPE: Yo what's good fam! Welcome back to another episode of The Max Market Show. I'm your host Pepe the Frog, and with me today is the one and only Max Market! Max, the AI space is absolutely BOOMING right now. What's got you excited?

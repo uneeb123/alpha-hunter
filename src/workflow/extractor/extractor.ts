@@ -122,11 +122,7 @@ export class Extractor {
   }
 
   private async createPodcast(contents: string, summary: string) {
-    const script = await generatePodcastScript(
-      this.secrets.anthropicApiKey,
-      contents,
-      summary,
-    );
+    const script = await generatePodcastScript(contents, summary);
     this.debug.info('Generated podcast script using vanilla LLM');
     this.debug.verbose(script);
 
