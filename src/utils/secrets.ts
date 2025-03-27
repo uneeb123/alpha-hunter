@@ -10,6 +10,7 @@ export interface Secrets {
   awsBucketName: string;
   telegramBotToken: string;
   elfaApiKey: string;
+  falApiKey: string;
 }
 
 class SecretsManager {
@@ -29,6 +30,7 @@ class SecretsManager {
       AWS_BUCKET_NAME,
       TELEGRAM_BOT_TOKEN,
       ELFA_API_KEY,
+      FAL_API_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -43,6 +45,7 @@ class SecretsManager {
       ['AWS_BUCKET_NAME', AWS_BUCKET_NAME],
       ['TELEGRAM_BOT_TOKEN', TELEGRAM_BOT_TOKEN],
       ['ELFA_API_KEY', ELFA_API_KEY],
+      ['FAL_API_KEY', FAL_API_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -66,6 +69,7 @@ class SecretsManager {
       awsBucketName: AWS_BUCKET_NAME!,
       telegramBotToken: TELEGRAM_BOT_TOKEN!,
       elfaApiKey: ELFA_API_KEY!,
+      falApiKey: FAL_API_KEY!,
     };
   }
 

@@ -5,13 +5,8 @@ import { ChatAnthropic } from '@langchain/anthropic';
 import { calculateEngagementScoreFromTweet } from './engagement_calculator';
 import { CryptoDetector } from './crypto_detector';
 import { TweetInsightExtractor, TweetInsight } from './tweet_insight_extractor';
-import { generatePodcastScript } from '@/workflow/extractor/podcast_script_client';
-import {
-  generatePodcastAudio,
-  generatePodcastVideo,
-} from '@/workflow/extractor/podcast_client';
-import { TweetsManager } from '@/workflow/extractor/tweets_manager';
 import { VectorStore } from '@/utils/vector_store';
+import { PodcastCreator } from './podcast_creator';
 
 // Extended type that includes engagement score
 export interface EnhancedMentionData extends MentionData {
@@ -34,6 +29,7 @@ export class ElfaExtractor {
   private secrets: Secrets;
   private processorId: number;
   private vectorStore!: VectorStore;
+  private podcastCreator!: PodcastCreator;
 
   constructor(private options: ElfaExtractorOptions) {
     this.debug = Debugger.create(
@@ -61,6 +57,14 @@ export class ElfaExtractor {
 
     // Generate a random processor ID between 999 and 999999
     this.processorId = Math.floor(Math.random() * (999999 - 999 + 1)) + 999;
+
+    // Initialize podcast creator
+    this.podcastCreator = new PodcastCreator(
+      this.secrets,
+      this.debug,
+      this.processorId,
+      this.options.dryRun,
+    );
   }
 
   public async run(): Promise<string> {
@@ -126,8 +130,7 @@ export class ElfaExtractor {
         // Save the insight headline to the vector store
         await this.saveInsightToVectorStore(insight);
 
-        // Generate podcast if option is enabled
-        await this.createPodcast(insight);
+        await this.podcastCreator.createPodcast(insight);
 
         // Convert the TweetInsight object to a formatted string
         return `Headline: ${insight.headline}\nKeywords: ${insight.keywords.join(', ')}\nSentiment: ${insight.sentiment}\nSource: ${insight.source}\nAnalysis: ${insight.analysis}`;
@@ -210,85 +213,6 @@ export class ElfaExtractor {
     } catch (error) {
       this.debug.error(`Failed to save insight to vector store: ${error}`);
       // Don't throw to allow the process to continue
-    }
-  }
-
-  private async createPodcast(insight: TweetInsight): Promise<void> {
-    try {
-      this.debug.info('Generating podcast script...');
-
-      // Use insight.analysis for tweets content
-      const tweetsContent = insight.analysis;
-
-      // Use insight.headline for relevant topics
-      const relevantTopics = insight.headline;
-
-      // Generate the podcast script
-      const script = await generatePodcastScript(
-        tweetsContent,
-        relevantTopics,
-        true,
-      );
-
-      this.debug.info('Generated podcast script');
-      this.debug.verbose(script);
-
-      // Generate podcast audio
-      const transcription = await generatePodcastAudio(
-        this.secrets.elevenLabsApiKey,
-        script,
-        this.processorId,
-      );
-      this.debug.info('Generated podcast audio');
-
-      // Generate podcast video
-      await generatePodcastVideo(this.processorId, transcription);
-      this.debug.info('Generated podcast video');
-
-      // Post to Twitter if not a dry run
-      if (!this.options.dryRun) {
-        await this.postToTwitter(insight.headline, insight.mentionUsers);
-      } else {
-        this.debug.info('Skipping Twitter post (dry run)');
-      }
-
-      this.debug.info('Podcast creation and posting completed');
-    } catch (error) {
-      this.debug.error(`Failed to create podcast: ${error}`);
-      // Don't throw the error to allow the rest of the process to continue
-    }
-  }
-
-  private async postToTwitter(
-    headline: string,
-    sources: string[],
-  ): Promise<void> {
-    try {
-      const tweetsManager = new TweetsManager(
-        this.secrets.twitterApiKey,
-        this.secrets.twitterApiSecret,
-        this.secrets.twitterAccessToken,
-        this.secrets.twitterAccessSecret,
-      );
-
-      const response = await tweetsManager.postTweetWithMedia(
-        this.processorId,
-        headline,
-      );
-      console.log(response.data.id);
-
-      const uniqueSources = [...new Set(sources)];
-      // Filter out sources that are just numbers
-      const validSources = uniqueSources.filter(
-        (source) => !/^\d+$/.test(source),
-      );
-      await tweetsManager.replyToTweet(
-        response.data.id,
-        `Sources: ${validSources.map((source) => `@${source}`).join(' ')}`,
-      );
-      this.debug.info('Posted tweet with podcast media');
-    } catch (error) {
-      this.debug.error(`Failed to post to Twitter: ${error}`);
     }
   }
 }
