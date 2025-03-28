@@ -1,4 +1,3 @@
-import { TweetInsight } from './tweet_insight_extractor';
 import { Debugger } from '@/utils/debugger';
 import { TweetsManager } from '@/workflow/extractor/tweets_manager';
 import { Secrets } from '@/utils/secrets';
@@ -19,22 +18,16 @@ export class PodcastCreator {
     private generatePictures: boolean = true,
   ) {}
 
-  public async createPodcast(insight: TweetInsight): Promise<void> {
+  public async createPodcast(
+    content: string,
+    context: string,
+    sources: string[],
+  ): Promise<void> {
     try {
       this.debug.info('Generating podcast script...');
 
-      // Use insight.analysis for tweets content
-      const tweetsContent = insight.analysis;
-
-      // Use insight.headline for relevant topics
-      const relevantTopics = insight.headline;
-
       // Generate the podcast script
-      const script = await generatePodcastScript(
-        tweetsContent,
-        relevantTopics,
-        true,
-      );
+      const script = await generatePodcastScript(content, context, true);
 
       this.debug.info('Generated podcast script');
       this.debug.verbose(script);
@@ -60,7 +53,7 @@ export class PodcastCreator {
 
       // Post to Twitter if not a dry run
       if (this.shouldPost) {
-        await this.postToTwitter(insight.headline, insight.mentionUsers);
+        await this.postToTwitter(content, sources);
       } else {
         this.debug.info('Skipping Twitter post (dry run)');
       }

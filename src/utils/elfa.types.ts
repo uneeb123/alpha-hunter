@@ -80,8 +80,34 @@ export interface MentionsResponse {
 }
 
 // Top mentions response
+export interface TwitterAccountInfo {
+  username: string;
+  twitter_user_id: string;
+  description: string;
+  profileImageUrl: string;
+}
+
+export interface Metrics {
+  like_count: number;
+  reply_count: number;
+  repost_count: number;
+  view_count: number;
+}
+
+export interface TopMentionData {
+  id: number;
+  twitter_id: string;
+  twitter_user_id: string;
+  content: string;
+  mentioned_at: string;
+  type: 'post' | 'quote' | 'repost';
+  metrics: Metrics;
+  twitter_account_info?: TwitterAccountInfo;
+}
+
+// Update TopMentionsData to use the new type
 export interface TopMentionsData {
-  data: MentionData[];
+  data: TopMentionData[];
   total: number;
   page: number;
   pageSize: number;
@@ -115,17 +141,10 @@ export interface SearchMentionsResponse {
 
 // Trending tokens response
 export interface TrendingToken {
-  ticker: string;
-  name: string;
-  totalMentions: number;
-  uniqueAccounts: number;
-  positivePercentage: number;
-  neutralPercentage: number;
-  negativePercentage: number;
-  engagement: number;
-  logoUrl?: string;
-  price?: number;
-  marketCap?: number;
+  token: string;
+  current_count: number;
+  previous_count: number;
+  change_percent: number;
 }
 
 export interface TrendingTokensResponse {

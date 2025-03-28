@@ -206,7 +206,7 @@ export const generate_ai_video = async (
   customOutputPath?: string,
 ): Promise<boolean> => {
   const debug = Debugger.getInstance();
-  debug.info('Starting AI video generation with OpenAI images');
+  debug.info('Generating AI video');
 
   const outputDir = path.join('data', processorId.toString());
 
@@ -255,6 +255,8 @@ export const generate_ai_video = async (
       debug.error('Failed to create segments from transcription');
       return false;
     }
+
+    console.log(segments);
 
     debug.info(`Created ${segments.length} segments from transcription`);
 

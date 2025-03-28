@@ -54,7 +54,7 @@ async function testAIVideoGeneration() {
     );
 
     // Run the AI video generation
-    debug.info('Starting AI-based video generation with OpenAI images');
+    debug.info('Starting test');
 
     // Use custom paths to read from and write directly to test directory
     const outputVideoPath = path.join(testDir, 'podcast_ai.mp4');

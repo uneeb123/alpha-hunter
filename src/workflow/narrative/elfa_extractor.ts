@@ -130,7 +130,11 @@ export class ElfaExtractor {
         // Save the insight headline to the vector store
         await this.saveInsightToVectorStore(insight);
 
-        await this.podcastCreator.createPodcast(insight);
+        await this.podcastCreator.createPodcast(
+          insight.headline,
+          insight.analysis,
+          insight.mentionUsers,
+        );
 
         // Convert the TweetInsight object to a formatted string
         return `Headline: ${insight.headline}\nKeywords: ${insight.keywords.join(', ')}\nSentiment: ${insight.sentiment}\nSource: ${insight.source}\nAnalysis: ${insight.analysis}`;
