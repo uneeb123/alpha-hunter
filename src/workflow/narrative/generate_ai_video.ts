@@ -133,7 +133,6 @@ const divideTranscriptionIntoSegments = (
     return [];
   }
 
-  // Set up for the first segment
   let currentSegment = {
     text: '',
     startTime: wordElements[0].start,
@@ -141,59 +140,42 @@ const divideTranscriptionIntoSegments = (
     speaker: wordElements[0].speaker,
   };
   let segmentText: string[] = [];
-  const minSegmentDuration = 8; // Minimum segment duration in seconds
-  const maxSegmentDuration = 20; // Maximum segment duration in seconds
 
   for (let i = 0; i < wordElements.length; i++) {
     const word = wordElements[i];
-    const prevWord = i > 0 ? wordElements[i - 1] : null;
+    const nextWord = i < wordElements.length - 1 ? wordElements[i + 1] : null;
 
     // Add word to current segment text
     segmentText.push(word.text);
 
     // Check for conditions to end the current segment:
-    // 1. Speaker changed
-    // 2. Minimum duration reached AND natural pause (more than 0.5s between words)
-    // 3. Maximum duration reached
-    // 4. End of transcription
-
-    const speakerChanged =
-      prevWord &&
-      word.speaker &&
-      prevWord.speaker &&
-      word.speaker !== prevWord.speaker;
-    const currentDuration = word.end - currentSegment.startTime;
-    const hasNaturalPause = prevWord && word.start - prevWord.end > 0.5;
-    const minDurationReached = currentDuration >= minSegmentDuration;
-    const maxDurationReached = currentDuration >= maxSegmentDuration;
+    // 1. Next word has a different speaker
+    // 2. End of transcription
+    const speakerChanging = nextWord && nextWord.speaker !== word.speaker;
     const isLastWord = i === wordElements.length - 1;
 
-    if (
-      speakerChanged ||
-      (minDurationReached && hasNaturalPause) ||
-      maxDurationReached ||
-      isLastWord
-    ) {
+    if (speakerChanging || isLastWord) {
+      // Complete current segment
       currentSegment.text = segmentText.join(' ');
       currentSegment.endTime = word.end;
 
       segments.push({ ...currentSegment });
 
-      // Start a new segment if not the last word
-      if (!isLastWord) {
+      // Start a new segment if there's a next word
+      if (nextWord) {
         segmentText = [];
         currentSegment = {
           text: '',
-          startTime: word.end,
+          startTime: nextWord.start,
           endTime: 0,
-          speaker: word.speaker,
+          speaker: nextWord.speaker,
         };
       }
     }
   }
 
   debug.info(
-    `Divided transcription into ${segments.length} segments based on speaker changes and natural breaks`,
+    `Divided transcription into ${segments.length} segments based on speaker changes`,
   );
   return segments;
 };
@@ -251,12 +233,12 @@ export const generate_ai_video = async (
     );
     const segments = divideTranscriptionIntoSegments(transcription);
 
+    debug.verbose(segments);
+
     if (segments.length === 0) {
       debug.error('Failed to create segments from transcription');
       return false;
     }
-
-    console.log(segments);
 
     debug.info(`Created ${segments.length} segments from transcription`);
 
@@ -268,15 +250,18 @@ export const generate_ai_video = async (
     debug.info('Generating optimized image prompts with OpenAI');
     const optimizedPrompts = await generateOptimizedImagePrompts(segments);
 
+    optimizedPrompts.forEach((prompt, index) => {
+      debug.verbose(`\n=== Prompt ${index + 1} ===\n${prompt}\n`);
+    });
+
     for (let i = 0; i < segments.length; i++) {
-      const segment = segments[i];
       try {
-        // Use the optimized prompt if available, otherwise fall back to the segment text
-        const promptToUse = optimizedPrompts[i] || segment.text;
+        const promptToUse = optimizedPrompts[i];
         const imagePath = await generateImagesFromTranscriptSegment(
           promptToUse,
           i,
           imagesDir,
+          segments[i].speaker || 'MAX',
         );
         imagePaths.push(imagePath);
         debug.info(`Generated image ${i + 1}/${segments.length}: ${imagePath}`);
@@ -525,6 +510,12 @@ async function generateOptimizedImagePrompts(
   const debug = Debugger.getInstance();
   const secrets = getSecrets();
 
+  // A human-like green frog sitting on an armchair
+  // style: illustration/clay
+
+  // A person in a brown hoodie but you can't see his face is sitting on an office chair facing the camera.
+  // style: other/hard-comics
+
   try {
     if (!secrets.openaiApiKey) {
       debug.error(
@@ -537,30 +528,27 @@ async function generateOptimizedImagePrompts(
       apiKey: secrets.openaiApiKey,
     });
 
-    // Create a context string with all segments for reference
-    const fullContext = segments
-      .map((seg, i) => `Segment ${i + 1}: "${seg.text}"`)
-      .join('\n');
-
     // Process all segments at once without batching
     const promises = segments.map(async (segment, index) => {
       try {
+        const speaker = segment.speaker;
+        const text = segment.text;
+        let character, example;
+        if (speaker === 'PEPE') {
+          character = 'A human-like green frog';
+          example = ' A human-like green frog sitting on an armchair';
+        } else {
+          character = "A person in a brown hoodie but you can't see his face";
+          example =
+            "A person in a brown hoodie but you can't see his face is sitting on an office chair facing the camera.";
+        }
         const { text: promptText } = await generateText({
           model: openai.chat('gpt-4-turbo'),
-          system:
-            'You are an expert at creating descriptive image prompts for AI image generation. \
-Create vivid, detailed prompts that will result in high-quality, engaging images for a video \
-presentation. The video features an ongoing dialog between a frog character and an anime character. \
-Maintain visual continuity between scenes.',
-          prompt: `Convert this transcript segment into a detailed image generation prompt. \
-The prompt should describe a scene that visually represents the content, suitable for a 16:9 \
-video. Focus on visual elements, style, mood, and composition. Don't include any audio or \
-text overlay instructions.\n\n\
-This is part of an ongoing conversation between a frog character and an anime character.\n\n\
-FULL CONVERSATION CONTEXT:\n${fullContext}\n\n\
-CURRENT SEGMENT (${index + 1}):\n"${segment.text}"\n\n\
-Create a prompt that shows these characters interacting while maintaining visual continuity with previous and future scenes.\n\n\
-Image generation prompt:`,
+          prompt: ` Given the following dialog: ${text}
+
+Give the right settings to ${character}
+
+Example: ${example}`,
           temperature: 0.7,
           maxTokens: 300,
         });

@@ -42,7 +42,16 @@ export const main = async (): Promise<void> => {
   debug.info(`Post to social media: ${options.post}`);
 
   // Define blacklist of tokens to exclude
-  const blacklist = ['btc', 'eth', 'sol', 'usd', 'ghibli', 'imhpc', 'wal'];
+  const blacklist = [
+    'btc',
+    'eth',
+    'sol',
+    'usd',
+    'ghibli',
+    'imhpc',
+    'wal',
+    'dog',
+  ];
 
   try {
     const elfaClient = new ElfaClient(debugConfig);
@@ -237,7 +246,7 @@ async function generateTokenInsight(
 
     return {
       ticker,
-      headline: `${insightData.headline} $${ticker.toUpperCase()}`,
+      headline: insightData.headline,
       analysis: insightData.analysis,
       mentionUsers,
     };

@@ -98,13 +98,11 @@ interface RecraftOptions {
     | 'vector_illustration/line_art'
     | 'vector_illustration/line_circuit'
     | 'vector_illustration/linocut';
+  outputPath?: string;
 }
 
 export class Fal {
-  private processorId: number;
-
-  constructor(processorId: number) {
-    this.processorId = processorId;
+  constructor() {
     const secrets = getSecrets();
     fal.config({
       credentials: secrets.falApiKey,
@@ -113,49 +111,62 @@ export class Fal {
 
   async recraft(prompt: string, opts: RecraftOptions = {}) {
     const defaultOpts: RecraftOptions = {
-      image_size: 'square_hd',
+      image_size: 'landscape_16_9',
       style: 'realistic_image/natural_light',
     };
 
     const options = { ...defaultOpts, ...opts };
+    const maxRetries = 3;
+    let lastError;
 
-    const result = await fal.subscribe('fal-ai/recraft-v3', {
-      input: {
-        prompt,
-        ...options,
-      },
-      onQueueUpdate: (update) => {
-        if (update.status === 'IN_PROGRESS') {
-          console.log('Progress:', update);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await fal.subscribe('fal-ai/recraft-v3', {
+          input: {
+            prompt,
+            ...options,
+          },
+          onQueueUpdate: (update) => {
+            if (update.status === 'IN_PROGRESS') {
+              //   console.log('Progress:', update);
+            }
+          },
+          logs: true,
+        });
+
+        if (result.data.images?.[0]) {
+          const outputDir = opts.outputPath
+            ? path.dirname(opts.outputPath)
+            : path.join('data', 'images');
+
+          if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+          }
+
+          const imageUrl = result.data.images[0].url;
+          const imageResponse = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+          });
+
+          const imagePath =
+            opts.outputPath || path.join(outputDir, `image_${Date.now()}.png`);
+
+          fs.writeFileSync(imagePath, Buffer.from(imageResponse.data));
+
+          return imagePath;
         }
-      },
-      logs: true,
-    });
-
-    if (result.data.images?.[0]) {
-      const outputDir = path.join(__dirname, '../scripts/test/output');
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+      } catch (error) {
+        lastError = error;
+        console.warn(`Attempt ${attempt} failed:`, (error as Error).message);
+        if (attempt < maxRetries) {
+          // Wait for 1 second before retrying
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
       }
-
-      const imageUrl = result.data.images[0].url;
-      const imageResponse = await axios.get(imageUrl, {
-        responseType: 'arraybuffer',
-      });
-
-      const imagePath = path.join(
-        outputDir,
-        `recraft_${this.processorId}_${result.requestId}.png`,
-      );
-      fs.writeFileSync(imagePath, Buffer.from(imageResponse.data));
-
-      return {
-        requestId: result.requestId,
-        imagePath,
-        data: result.data,
-      };
     }
 
-    throw new Error('No images returned in the response');
+    throw new Error(
+      `Failed after ${maxRetries} attempts. Last error: ${(lastError as Error)?.message}`,
+    );
   }
 }

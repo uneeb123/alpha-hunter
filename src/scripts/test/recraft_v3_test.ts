@@ -1,21 +1,27 @@
 import { Fal } from '@/utils/fal';
+import path from 'path';
 
 async function testRecraftV3() {
   try {
     console.log('Testing Recraft V3 API with official client...');
 
-    const fal = new Fal(12345); // Test processor ID
-    const result = await fal.recraft(
-      'A serene mountain landscape with a clear blue lake',
+    const fal = new Fal();
+    const outputPath = path.join(
+      __dirname,
+      'recraft',
+      `test_${Date.now()}.png`,
+    );
+
+    const imagePath = await fal.recraft(
+      'A human-like green frog sitting on an armchair',
       {
-        image_size: 'square_hd',
-        style: 'realistic_image/natural_light',
+        image_size: 'landscape_16_9',
+        style: 'digital_illustration/hand_drawn',
+        outputPath,
       },
     );
 
-    console.log('Request ID:', result.requestId);
-    console.log('Response received:', JSON.stringify(result.data, null, 2));
-    console.log(`Image saved to: ${result.imagePath}`);
+    console.log(`Image generated successfully and saved to: ${imagePath}`);
     console.log('Test completed successfully');
   } catch (error) {
     console.error('Error testing Recraft V3 API:', error);

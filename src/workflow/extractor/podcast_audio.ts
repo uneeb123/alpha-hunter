@@ -361,7 +361,7 @@ Do not include any explanations, comments, or additional text before or after th
 
     // Call Claude to fix the transcription
     const { text: claudeResponse } = await aiGenerateText({
-      model: anthropic.languageModel('claude-3-5-sonnet-20241022'),
+      model: anthropic.languageModel('claude-3-7-sonnet-20250219'),
       prompt,
       system,
       temperature: 0.1, // Very low temperature for consistent results
