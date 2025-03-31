@@ -51,6 +51,13 @@ export const main = async (): Promise<void> => {
     'imhpc',
     'wal',
     'dog',
+    'spx',
+    'giko',
+    'grok',
+    'link',
+    'pleb',
+    'gun',
+    'tsla',
   ];
 
   try {
@@ -96,7 +103,7 @@ export const main = async (): Promise<void> => {
         // Get top mentions for this token
         debug.info('Fetching top mentions for this token...');
         const mentionsResponse = await elfaClient.getTopMentions({
-          ticker: topToken.token,
+          ticker: `${topToken.token}`,
           timeWindow: '24h',
           pageSize: Math.min(topToken.current_count, 100), // Use current count, max 100
           includeAccountDetails: true,
@@ -187,8 +194,9 @@ async function generateTokenInsight(
   // Initialize ChatAnthropic model
   const model = new ChatAnthropic({
     anthropicApiKey: secrets.anthropicApiKey,
-    modelName: 'claude-3-sonnet-20240229',
+    modelName: 'claude-3-7-sonnet-20250219',
     temperature: 0.3,
+    maxTokens: 8192,
   });
 
   // Format the related mentions for the LLM

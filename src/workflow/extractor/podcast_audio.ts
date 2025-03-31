@@ -16,7 +16,7 @@ export interface TranscriptionWord {
   start: number;
   end: number;
   type: string;
-  speaker?: string;
+  speaker: string;
 }
 
 export interface TranscriptionResponse {
@@ -136,7 +136,7 @@ export const generatePodcastAudio = async (
   // Wait for FFmpeg to finish
   await ffmpegPromise;
 
-  let transcription: TranscriptionResponse | undefined;
+  let transcription: TranscriptionResponse;
 
   // Perform transcription
   try {
@@ -146,6 +146,10 @@ export const generatePodcastAudio = async (
 
     // Combine original script text with transcription timings
     debug.verbose(rawTranscription.words);
+
+    // TODO: fix alignment (currently max output tokens exceeding in response)
+    transcription = rawTranscription;
+    /*
     try {
       transcription = await alignScriptWithTranscription(
         rawTranscription,
@@ -156,6 +160,7 @@ export const generatePodcastAudio = async (
       debug.info('Falling back to raw transcription');
       transcription = rawTranscription;
     }
+    */
 
     // Save both transcriptions for reference
     const rawTranscriptionPath = path.join(outputDir, 'raw_transcription.json');
@@ -213,6 +218,8 @@ export const transcribeAudio = async (
       model_id: 'scribe_v1', // Model to use, currently only "scribe_v1" is supported
       tag_audio_events: true, // Tag audio events like laughter, applause, etc.
       language_code: 'eng', // Language of the audio file, null for auto-detection
+      num_speakers: 2,
+      diarize: true,
     });
 
     if (transcription && transcription.text) {
@@ -223,6 +230,7 @@ export const transcribeAudio = async (
         start: word.start || 0,
         end: word.end || 0,
         type: word.type || 'word',
+        speaker: word.speaker_id == 'speaker_0' ? 'PEPE' : 'MAX',
       }));
 
       return {
@@ -383,7 +391,18 @@ Do not include any explanations, comments, or additional text before or after th
         'Failed to parse Claude response as JSON:',
         parseError instanceof Error ? parseError : String(parseError),
       );
-      debug.error('Raw response that failed to parse:', cleanedResponse);
+
+      // Log response length and check for truncation
+      debug.error('Response details:', {
+        length: cleanedResponse.length,
+        startsWithBracket: cleanedResponse.startsWith('['),
+        endsWithBracket: cleanedResponse.endsWith(']'),
+        lastFewChars: cleanedResponse.slice(-50),
+        // Show first and last 100 characters to see both ends
+        start: cleanedResponse.slice(0, 100) + '...',
+        end: '...' + cleanedResponse.slice(-100),
+      });
+
       throw new Error(
         `JSON parsing failed: ${
           parseError instanceof Error ? parseError.message : String(parseError)

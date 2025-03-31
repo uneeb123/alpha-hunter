@@ -80,6 +80,8 @@ export class ElfaExtractor {
         offset: 0,
       });
 
+      console.log(mentionsResponse);
+
       this.debug.info(
         `Retrieved ${mentionsResponse.data.length} tweets from Elfa API`,
       );
