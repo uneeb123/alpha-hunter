@@ -4,7 +4,7 @@ import axios from 'axios';
 import { fal } from '@fal-ai/client';
 import { getSecrets } from './secrets';
 
-interface RecraftOptions {
+export interface RecraftOptions {
   image_size?:
     | 'square_hd'
     | 'square'

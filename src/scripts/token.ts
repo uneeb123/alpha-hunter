@@ -58,6 +58,10 @@ export const main = async (): Promise<void> => {
     'pleb',
     'gun',
     'tsla',
+    'eur',
+    'dawg',
+    'k',
+    'mcp',
   ];
 
   try {
