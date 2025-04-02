@@ -64,31 +64,6 @@ async function getAllStyles(): Promise<string[]> {
     'digital_illustration/vanilla_dreams',
     'digital_illustration/young_adult_book',
     'digital_illustration/young_adult_book_2',
-
-    // vector_illustration styles
-    'vector_illustration/bold_stroke',
-    'vector_illustration/chemistry',
-    'vector_illustration/colored_stencil',
-    'vector_illustration/contour_pop_art',
-    'vector_illustration/cosmics',
-    'vector_illustration/cutout',
-    'vector_illustration/depressive',
-    'vector_illustration/editorial',
-    'vector_illustration/emotional_flat',
-    'vector_illustration/infographical',
-    'vector_illustration/marker_outline',
-    'vector_illustration/mosaic',
-    'vector_illustration/naivector',
-    'vector_illustration/roundish_flat',
-    'vector_illustration/segmented_colors',
-    'vector_illustration/sharp_contrast',
-    'vector_illustration/thin',
-    'vector_illustration/vector_photo',
-    'vector_illustration/vivid_shapes',
-    'vector_illustration/engraving',
-    'vector_illustration/line_art',
-    'vector_illustration/line_circuit',
-    'vector_illustration/linocut',
   ];
 }
 

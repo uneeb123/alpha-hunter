@@ -43,7 +43,7 @@ export async function generateImage(
     const fal = new Fal();
     const imagePath = await fal.recraft(options.prompt, {
       image_size: 'landscape_16_9',
-      style: 'digital_illustration/hand_drawn_outline',
+      style: 'realistic_image/organic_calm',
       outputPath: options.outputPath,
     });
 

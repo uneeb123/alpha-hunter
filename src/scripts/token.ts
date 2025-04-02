@@ -62,6 +62,9 @@ export const main = async (): Promise<void> => {
     'dawg',
     'k',
     'mcp',
+    'act',
+    'trump',
+    'prompt',
   ];
 
   try {
