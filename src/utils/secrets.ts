@@ -14,6 +14,7 @@ export interface Secrets {
   telegramBotToken: string;
   elfaApiKey: string;
   falApiKey: string;
+  vercelEnv: string;
 }
 
 class SecretsManager {
@@ -34,6 +35,7 @@ class SecretsManager {
       TELEGRAM_BOT_TOKEN,
       ELFA_API_KEY,
       FAL_API_KEY,
+      VERCEL_ENV,
     } = process.env;
 
     // Validate all required secrets are present
@@ -49,6 +51,7 @@ class SecretsManager {
       ['TELEGRAM_BOT_TOKEN', TELEGRAM_BOT_TOKEN],
       ['ELFA_API_KEY', ELFA_API_KEY],
       ['FAL_API_KEY', FAL_API_KEY],
+      ['VERCEL_ENV', VERCEL_ENV],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -73,6 +76,7 @@ class SecretsManager {
       telegramBotToken: TELEGRAM_BOT_TOKEN!,
       elfaApiKey: ELFA_API_KEY!,
       falApiKey: FAL_API_KEY!,
+      vercelEnv: VERCEL_ENV!,
     };
   }
 

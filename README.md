@@ -1,5 +1,12 @@
 # Scripts
 
+# Telegram
+
+ngrok http 3000
+pnpm dev
+curl -X POST http://<VERCEL_ENV>/api/telegram/set-webhook
+curl -X POST http://<VERCEL_ENV>/api/telegram/delete-webhook
+
 ## Management
 
 #### Create users and alpha

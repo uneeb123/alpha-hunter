@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { TelegramClient } from '@/workflow/extractor/telegram_client';
+import { TelegramClient } from '@/utils/telegram_client';
 import { Debugger, DebugConfig } from '@/utils/debugger';
 import { getSecrets } from '@/utils/secrets';
 

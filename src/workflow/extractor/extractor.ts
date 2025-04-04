@@ -9,7 +9,7 @@ import { Debugger } from '@/utils/debugger';
 import { getSecrets } from '@/utils/secrets';
 import { PrismaClient, Alpha, Processor, User } from '@prisma/client';
 import { TweetsCompiler } from './tweets_compiler';
-import { TelegramClient } from './telegram_client';
+import { TelegramClient } from '../../utils/telegram_client';
 // import { AgentFactory } from '@/utils/langchain_agent';
 // import { generateAudio } from './voice_client';
 import { NewsAgent } from '@/workflow/extractor/news_agent';

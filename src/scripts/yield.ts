@@ -2,7 +2,7 @@ import { DefiLlamaClient, PoolData } from '../utils/defillama';
 import { Command } from 'commander';
 import { Debugger, DebugConfig } from '../utils/debugger';
 import * as projectUrls from '../utils/yield_pools.json';
-import { TelegramClient } from '../workflow/extractor/telegram_client';
+import { TelegramClient } from '../utils/telegram_client';
 import { getSecrets } from '../utils/secrets';
 
 const program = new Command();

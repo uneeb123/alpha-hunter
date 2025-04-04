@@ -1,5 +1,7 @@
 import { Telegraf } from 'telegraf';
+import { Update } from 'telegraf/types';
 import { Debugger } from '@/utils/debugger';
+import { getSecrets } from '@/utils/secrets';
 
 export class TelegramClient {
   private bot: Telegraf;
@@ -7,6 +9,59 @@ export class TelegramClient {
 
   constructor(botToken: string) {
     this.bot = new Telegraf(botToken);
+    this.setupMessageHandlers();
+  }
+
+  private setupMessageHandlers() {
+    // Handle text messages
+    this.bot.on('text', async (ctx) => {
+      const message = ctx.message.text;
+      const chatId = ctx.chat.id;
+      this.debug.info(`Received message from chat ${chatId}: ${message}`);
+
+      // Here you can add your message handling logic
+      if (ctx.chat.type == 'private') {
+        await ctx.reply('Message received!');
+      }
+    });
+
+    // Handle errors
+    this.bot.catch((err) => {
+      this.debug.error('Telegram bot error:', err as Error);
+    });
+  }
+
+  // Method to handle webhook updates
+  public async handleUpdate(body: Update) {
+    try {
+      await this.bot.handleUpdate(body);
+      return true;
+    } catch (error) {
+      this.debug.error('Error handling telegram update:', error as Error);
+      return false;
+    }
+  }
+
+  // Method to set webhook URL
+  async setWebhook() {
+    try {
+      const { vercelEnv } = getSecrets();
+      await this.bot.telegram.setWebhook(`${vercelEnv}/api/telegram-webhook`);
+      this.debug.info(`Webhook set to: ${vercelEnv}/api/telegram-webhook`);
+    } catch (error) {
+      this.debug.error('Failed to set webhook:', error as Error);
+      throw error;
+    }
+  }
+
+  async deleteWebhook() {
+    try {
+      await this.bot.telegram.deleteWebhook();
+      this.debug.info('Webhook deleted successfully');
+    } catch (error) {
+      this.debug.error('Failed to delete webhook:', error as Error);
+      throw error;
+    }
   }
 
   /**
