@@ -45,9 +45,11 @@ export class TelegramClient {
   // Method to set webhook URL
   async setWebhook() {
     try {
-      const { vercelEnv } = getSecrets();
-      await this.bot.telegram.setWebhook(`${vercelEnv}/api/telegram-webhook`);
-      this.debug.info(`Webhook set to: ${vercelEnv}/api/telegram-webhook`);
+      const { vercelUrl } = getSecrets();
+      await this.bot.telegram.setWebhook(
+        `https://${vercelUrl}/api/telegram-webhook`,
+      );
+      this.debug.info(`Webhook set to: ${vercelUrl}/api/telegram-webhook`);
     } catch (error) {
       this.debug.error('Failed to set webhook:', error as Error);
       throw error;
