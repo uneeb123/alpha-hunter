@@ -10,38 +10,33 @@ export interface PoolData {
   project: string;
   symbol: string;
   tvlUsd: number;
-  apyBase?: number;
-  apyReward?: number;
+  apyBase: number;
+  apyReward: number | null;
   apy: number;
-  rewardTokens?: string[];
-  underlyingTokens?: string[];
-  il7d?: number;
-  apyBase7d?: number;
-  apyMean7d?: number;
-  volumeUsd7d?: number;
-  apyBaseInception?: number;
-  apyIncludingLsdApy?: number;
+  rewardTokens: string | null;
   stablecoin: boolean;
   ilRisk: string;
   exposure: string;
-  predictions?: {
-    predictedClass: string;
-    predictedProbability: number;
-    binnedConfidence: number;
+  predictions: {
+    predictedClass: 'Stable/Up' | 'Down' | null;
+    predictedProbability: number | null;
+    binnedConfidence: number | null;
   };
-  poolMeta?: string;
-  mu?: number;
-  sigma?: number;
-  count?: number;
-  outlier?: boolean;
-  underlyingIcons?: string[];
-  aprOptimizer?: boolean;
-  ltv?: number;
-  borrowable?: boolean;
-  borrowUsd?: number;
-  totalSupplyUsd?: number;
-  totalBorrowUsd?: number;
-  url?: string;
+  poolMeta: string | null;
+  mu: number;
+  sigma: number;
+  count: number;
+  outlier: boolean;
+  underlyingTokens: string[];
+  il7d: number | null;
+  apyBase7d: number | null;
+  apyMean30d: number;
+  volumeUsd1d: number | null;
+  volumeUsd7d: number | null;
+  apyBaseInception: number | null;
+  apyPct1D: number;
+  apyPct7D: number;
+  apyPct30D: number;
 }
 
 export interface PoolsResponse {

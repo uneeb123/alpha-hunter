@@ -23,7 +23,8 @@ export class TelegramClient {
       // Note: Telegram doesn't provide a direct API to get all chats a bot is in
       // We'll use getChatAdministrators in a try/catch to determine if the bot is in the chat
 
-      const chatIds = ['-1002494776074'];
+      const chatIds = ['-1002494776074', '-4656585527'];
+      // const chatIds = ['-4656585527'];
 
       if (chatIds.length === 0) {
         this.debug.info('No chat IDs configured to send messages to');

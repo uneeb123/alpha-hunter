@@ -6,6 +6,7 @@ import {
   PoolChartResponse,
   ProtocolsResponse,
   ProtocolTVLChartResponse,
+  PoolData,
 } from './defillama.types';
 
 // Re-export all types
@@ -15,6 +16,7 @@ export type {
   PoolChartResponse,
   ProtocolsResponse,
   ProtocolTVLChartResponse,
+  PoolData,
 };
 
 export class DefiLlamaClient {
