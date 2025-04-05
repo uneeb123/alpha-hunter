@@ -1,11 +1,16 @@
-# Scripts
+# Running Telegram Message Handler Locally
 
-# Telegram
-
+curl -X POST https://admin.singularitylabs.co/api/telegram/delete-webhook
 ngrok http 3000
+copy paste the forwarding URL
 pnpm dev
-curl -X POST http://<VERCEL_ENV>/api/telegram/set-webhook
-curl -X POST http://<VERCEL_ENV>/api/telegram/delete-webhook
+curl -X POST https://<PRODUCTION_URL>/api/telegram/set-webhook
+curl -X POST https://<PRODUCTION_URL>/api/telegram/delete-webhook
+curl -X POST https://admin.singularitylabs.co/api/telegram/set-webhook
+
+curl -X POST https://e664-2601-646-300-5e0-b974-eee8-c8c9-d14c.ngrok-free.app/api/telegram/set-webhook
+
+# Scripts
 
 ## Management
 

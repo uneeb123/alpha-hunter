@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
   try {
     const client = getTelegramClient();
     const body = await req.json();
-    console.log(body);
 
     const success = await client.handleUpdate(body);
 

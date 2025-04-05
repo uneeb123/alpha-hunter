@@ -15,6 +15,7 @@ export interface Secrets {
   elfaApiKey: string;
   falApiKey: string;
   productionUrl: string;
+  tavilyApiKey: string;
 }
 
 class SecretsManager {
@@ -36,6 +37,7 @@ class SecretsManager {
       ELFA_API_KEY,
       FAL_API_KEY,
       PRODUCTION_URL,
+      TAVILY_API_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -52,6 +54,7 @@ class SecretsManager {
       ['ELFA_API_KEY', ELFA_API_KEY],
       ['FAL_API_KEY', FAL_API_KEY],
       ['PRODUCTION_URL', PRODUCTION_URL],
+      ['TAVILY_API_KEY', TAVILY_API_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -77,6 +80,7 @@ class SecretsManager {
       elfaApiKey: ELFA_API_KEY!,
       falApiKey: FAL_API_KEY!,
       productionUrl: PRODUCTION_URL!,
+      tavilyApiKey: TAVILY_API_KEY!,
     };
   }
 

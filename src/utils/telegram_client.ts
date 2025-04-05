@@ -2,13 +2,16 @@ import { Telegraf } from 'telegraf';
 import { Update } from 'telegraf/types';
 import { Debugger } from '@/utils/debugger';
 import { getSecrets } from '@/utils/secrets';
+import { Chatter } from '@/workflow/chatbot/chatbot';
 
 export class TelegramClient {
   private bot: Telegraf;
   private debug = Debugger.getInstance();
+  private chatter: Chatter;
 
   constructor(botToken: string) {
     this.bot = new Telegraf(botToken);
+    this.chatter = new Chatter();
     this.setupMessageHandlers();
   }
 
@@ -19,10 +22,7 @@ export class TelegramClient {
       const chatId = ctx.chat.id;
       this.debug.info(`Received message from chat ${chatId}: ${message}`);
 
-      // Here you can add your message handling logic
-      if (ctx.chat.type == 'private') {
-        await ctx.reply('Message received!');
-      }
+      await this.chatter.handleMessage(ctx);
     });
 
     // Handle errors
@@ -34,6 +34,53 @@ export class TelegramClient {
   // Method to handle webhook updates
   public async handleUpdate(body: Update) {
     try {
+      /*
+      This is where we add bot to the group
+      
+      {
+  "update_id": 182162236,
+  "message": {
+    "message_id": 634,
+    "from": {
+      "id": 553387505,
+      "is_bot": false,
+      "first_name": "asdf",
+      "username": "asdf0x",
+      "language_code": "en",
+      "is_premium": true
+    },
+    "chat": {
+      "id": -4715914505,
+      "title": "Max Test",
+      "type": "group",
+      "all_members_are_administrators": true
+    },
+    "date": 1743799668,
+    "new_chat_participant": {
+      "id": 7513311662,
+      "is_bot": true,
+      "first_name": "Max Profit",
+      "username": "max_mrkt_bot"
+    },
+    "new_chat_member": {
+      "id": 7513311662,
+      "is_bot": true,
+      "first_name": "Max Profit",
+      "username": "max_mrkt_bot"
+    },
+    "new_chat_members": [
+      {
+        "id": 7513311662,
+        "is_bot": true,
+        "first_name": "Max Profit",
+        "username": "max_mrkt_bot"
+      }
+    ]
+  }
+}
+}
+       */
+      console.log(JSON.stringify(body, null, 2));
       await this.bot.handleUpdate(body);
       return true;
     } catch (error) {
