@@ -39,6 +39,7 @@
     "elevenlabs": "^1.55.0",
     "fluent-ffmpeg": "^2.1.3",
     "hnswlib-node": "^1.4.2",
+    "langchain": "^0.3.20",
     "memory": "link:@langchain/vectorstores/memory",
     "next": "15.1.7",
     "openai": "^4.89.1",
