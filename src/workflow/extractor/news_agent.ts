@@ -1,7 +1,6 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 // import { ChatOpenAI } from '@langchain/openai';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
 import { JsonOutputParser } from '@langchain/core/output_parsers';
 import { VectorStore } from '@/utils/vector_store';
 import { getSecrets } from '@/utils/secrets';
