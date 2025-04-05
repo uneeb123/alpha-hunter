@@ -4,7 +4,7 @@ import { ChatAgent } from '@/workflow/chatbot/agent';
 
 export class Chatter {
   private debug = Debugger.getInstance();
-  private whitelistedChatIds = [-1002574505074];
+  private whitelistedChatIds = [-1002574505074, -1002494776074, -4656585527];
   private agent: ChatAgent;
 
   constructor() {

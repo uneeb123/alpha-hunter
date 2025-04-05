@@ -68,6 +68,9 @@ importers:
       hnswlib-node:
         specifier: ^1.4.2
         version: 1.4.2
+      memory:
+        specifier: link:@langchain/vectorstores/memory
+        version: link:@langchain/vectorstores/memory
       next:
         specifier: 15.1.7
         version: 15.1.7(@opentelemetry/api@1.9.0)(@playwright/test@1.51.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
