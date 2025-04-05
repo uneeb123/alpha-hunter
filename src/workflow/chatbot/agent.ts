@@ -11,8 +11,10 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { ElfaClient } from '@/utils/elfa';
 import { DefiLlamaClient } from '@/utils/defillama';
+import { TopMentionData } from '@/utils/elfa.types';
 
 export class ChatAgent {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private app: any;
   private conversationStates: Map<string, typeof MessagesAnnotation.State>;
   private elfaClient: ElfaClient;
@@ -36,12 +38,12 @@ export class ChatAgent {
 
           const mentions = response.data.data
             .map(
-              (m) =>
+              (m: TopMentionData) =>
                 `"${m.content}" - @${m.twitter_account_info?.username || 'unknown'}`,
             )
             .join('\n');
           return `recent mentions for ${input.token}:\n${mentions}`;
-        } catch (error) {
+        } catch {
           return `sorry, couldn't get info for ${input.token}`;
         }
       },
@@ -88,7 +90,7 @@ export class ChatAgent {
             .join('\n');
 
           return `here are the top yield opportunities:\n${response}`;
-        } catch (error) {
+        } catch {
           return 'sorry, had trouble getting yield data right now.';
         }
       },
