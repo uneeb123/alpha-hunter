@@ -91,119 +91,51 @@ Do not include any explanatory text before or after the JSON. Only return the JS
 `);
 
     const jsonOutputParser = new JsonOutputParser<NewsItem[]>();
-    const extractionChain = RunnableSequence.from([
-      extractionPrompt,
-      this.model,
-      async (output) => {
-        try {
-          // Try to parse the output directly
-          return await jsonOutputParser.parse(output);
-        } catch (e) {
-          // If direct parsing fails, try to extract JSON from the text
-          this.debug.verbose(
-            'Initial JSON parsing failed, attempting to extract JSON from text',
-          );
-          try {
-            // Look for JSON-like content in the response
-            const jsonMatch = output.text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
-            if (jsonMatch) {
-              const jsonString = jsonMatch[0];
-              return JSON.parse(jsonString);
-            }
+    const recentHeadlines = await this.vectorStore.getRecentNewsHeadlines(10);
+    const formattedPrompt = await extractionPrompt.format({
+      tweets,
+      topic,
+      pastNews: recentHeadlines.map((h) => `- ${h}`).join('\n'),
+    });
 
-            // If no JSON-like content found, try a more structured approach
-            this.debug.verbose(
-              'Attempting to parse structured content from LLM response',
-            );
-            const structuredOutput = await this.extractStructuredContent(
-              output.text,
-            );
-            return structuredOutput;
-          } catch (innerError) {
-            this.debug.error(
-              'Failed to extract JSON from text',
-              innerError as Error,
-            );
-            throw e; // Throw the original error
-          }
-        }
+    const response = await this.model.invoke([
+      {
+        role: 'user',
+        content: formattedPrompt,
       },
     ]);
 
-    let extractedNews;
     try {
-      const recentHeadlines = await this.vectorStore.getRecentNewsHeadlines(10);
-      extractedNews = await extractionChain.invoke({
-        tweets,
-        topic,
-        pastNews: recentHeadlines.map((h) => `- ${h}`).join('\n'),
-      });
-
-      // If it's not an array, wrap it
-      if (!Array.isArray(extractedNews)) {
-        extractedNews = [extractedNews];
-      }
+      return await jsonOutputParser.parse(response.text);
     } catch (e) {
-      console.error('Failed to parse extracted news as JSON', e);
-      // Fallback to empty array if parsing fails
-      extractedNews = [];
-    }
-    this.debug.verbose(extractedNews);
-
-    // Step 2: Filter out news that's too similar to existing news
-    const uniqueNews = [];
-
-    for (const newsItem of extractedNews) {
-      // Create a query string from the news item
-      const queryText = `${newsItem.headline} ${newsItem.summary}`;
-
-      // Check similarity with existing news in vector store
-      const similarDocs = await this.vectorStore.similaritySearch(queryText, 5);
-
-      // Default to unique if no similar docs found
-      let isDuplicate = false;
-
-      // No need to check similarity scores - if we found any results with same headline or very similar content,
-      // it's likely a duplicate since we're using semantic search
-      if (similarDocs.length > 0) {
-        // Check if headlines match or content is very similar
-        for (const doc of similarDocs) {
-          if (
-            doc.metadata.headline &&
-            (doc.metadata.headline.toLowerCase() ===
-              newsItem.headline.toLowerCase() ||
-              doc.pageContent.includes(newsItem.headline))
-          ) {
-            this.debug.info('Found duplicate by headline match');
-            isDuplicate = true;
-            break;
-          }
+      // If direct parsing fails, try to extract JSON from the text
+      this.debug.verbose(
+        'Initial JSON parsing failed, attempting to extract JSON from text',
+      );
+      try {
+        // Look for JSON-like content in the response
+        const jsonMatch = response.text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonString = jsonMatch[0];
+          return JSON.parse(jsonString);
         }
-      }
 
-      if (!isDuplicate) {
-        uniqueNews.push(newsItem);
+        // If no JSON-like content found, try a more structured approach
+        this.debug.verbose(
+          'Attempting to parse structured content from LLM response',
+        );
+        const structuredOutput = await this.extractStructuredContent(
+          response.text,
+        );
+        return structuredOutput;
+      } catch (innerError) {
+        this.debug.error(
+          'Failed to extract JSON from text',
+          innerError as Error,
+        );
+        throw e; // Throw the original error
       }
     }
-
-    // Step 3: Store the new, unique news items in the vector store
-    for (const newsItem of uniqueNews) {
-      const newsText = `${newsItem.headline} ${newsItem.summary}`;
-      await this.vectorStore.addDocuments([
-        {
-          pageContent: newsText,
-          metadata: {
-            headline: newsItem.headline,
-            summary: newsItem.summary,
-            source: newsItem.source,
-            timestamp: new Date().toISOString(),
-            type: 'news_item',
-          },
-        },
-      ]);
-    }
-
-    return uniqueNews;
   }
 
   // Helper method to extract structured content when JSON parsing fails
@@ -219,12 +151,13 @@ Do not include any explanatory text before or after the JSON. Only return the JS
     `);
 
     const jsonOutputParser = new JsonOutputParser<NewsItem[]>();
-    const structuringChain = RunnableSequence.from([
-      structuringPrompt,
-      this.model,
-      jsonOutputParser,
+    const formattedPrompt = await structuringPrompt.format({ text });
+    const response = await this.model.invoke([
+      {
+        role: 'user',
+        content: formattedPrompt,
+      },
     ]);
-
-    return await structuringChain.invoke({ text });
+    return await jsonOutputParser.parse(response.text);
   }
 }
