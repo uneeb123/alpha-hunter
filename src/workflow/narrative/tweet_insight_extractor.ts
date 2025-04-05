@@ -2,7 +2,6 @@ import { Debugger } from '@/utils/debugger';
 import { MentionData, ElfaClient } from '@/utils/elfa';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
 import { calculateEngagementScoreWithoutBookmarks } from './engagement_calculator';
 import { getUsernameById } from '@/utils/x';
 
@@ -61,11 +60,19 @@ export class TweetInsightExtractor {
     Provide ONLY the JSON with no additional text or explanation.
     `);
 
-    const chain = RunnableSequence.from([insightsExtractionPrompt, this.model]);
+    const formattedPrompt = await insightsExtractionPrompt.format({
+      tweetFormatted,
+    });
+
+    const response = await this.model.invoke([
+      {
+        role: 'user',
+        content: formattedPrompt,
+      },
+    ]);
 
     // Parse the JSON response
     try {
-      const response = await chain.invoke({ tweetFormatted });
       const insightData = JSON.parse(response.text.trim());
 
       // Create a complete insight object with tweet metadata
@@ -195,13 +202,18 @@ export class TweetInsightExtractor {
       - Do not start with "Based on the tweets provided" or similar phrases
       `);
 
-      const chain = RunnableSequence.from([analysisPrompt, this.model]);
-
-      const response = await chain.invoke({
+      const formattedPrompt = await analysisPrompt.format({
         keywords: keywords.join(', '),
         headline,
         relatedMentions,
       });
+
+      const response = await this.model.invoke([
+        {
+          role: 'user',
+          content: formattedPrompt,
+        },
+      ]);
 
       return {
         analysis: response.text.trim(),
