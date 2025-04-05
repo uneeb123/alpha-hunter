@@ -1,7 +1,6 @@
 import { MentionData } from '@/utils/elfa';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
 import { Debugger } from '@/utils/debugger';
 
 export class CryptoDetector {
@@ -36,9 +35,17 @@ export class CryptoDetector {
       Answer (YES/NO):
       `);
 
-      const chain = RunnableSequence.from([cryptoCheckPrompt, this.model]);
+      const formattedPrompt = await cryptoCheckPrompt.format({
+        tweetContent: tweet.content,
+      });
 
-      const response = await chain.invoke({ tweetContent: tweet.content });
+      const response = await this.model.invoke([
+        {
+          role: 'user',
+          content: formattedPrompt,
+        },
+      ]);
+
       const answer = response.text.trim().toUpperCase();
 
       this.debug.verbose(`Crypto check for tweet: ${answer}`);
