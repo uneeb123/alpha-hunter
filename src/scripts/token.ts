@@ -3,11 +3,16 @@ import { Debugger, DebugConfig } from '@/utils/debugger';
 import { ElfaClient } from '@/utils/elfa';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { getSecrets } from '@/utils/secrets';
-import { PromptTemplate } from '@langchain/core/prompts';
+import {
+  HumanMessagePromptTemplate,
+  PromptTemplate,
+} from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { PodcastCreator } from '@/workflow/narrative/podcast_creator';
 import { TopMentionData } from '@/utils/elfa.types';
 import { calculateEngagementScoreWithoutBookmarks } from '@/workflow/narrative/engagement_calculator';
+import { ChatOpenAI } from '@langchain/openai';
+import { HumanMessage } from '@langchain/core/messages';
 
 // Interface for our token insights
 interface TokenInsight {
@@ -221,7 +226,7 @@ async function generateTokenInsight(
     .filter((username): username is string => username !== undefined);
 
   // Create a prompt for generating insights
-  const insightPrompt = PromptTemplate.fromTemplate(`
+  const prompt = HumanMessagePromptTemplate.fromTemplate(`
   You are a cryptocurrency market analyst specializing in token analysis. 
   I'll provide you with several tweets related to the token: {ticker}.
 
@@ -248,14 +253,18 @@ async function generateTokenInsight(
   Provide ONLY the JSON with no additional text or explanation.
   `);
 
-  // Create and run the chain
-  const chain = RunnableSequence.from([insightPrompt, model]);
-
   try {
-    const response = await chain.invoke({
+    const formattedPrompt = await prompt.format({
       ticker,
       formattedMentions,
     });
+
+    const response = await model.invoke([
+      {
+        role: 'user',
+        content: formattedPrompt.toString(),
+      },
+    ]);
 
     // Parse JSON response
     const insightData = JSON.parse(response.text.trim());
