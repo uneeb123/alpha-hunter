@@ -3,16 +3,10 @@ import { Debugger, DebugConfig } from '@/utils/debugger';
 import { ElfaClient } from '@/utils/elfa';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { getSecrets } from '@/utils/secrets';
-import {
-  HumanMessagePromptTemplate,
-  PromptTemplate,
-} from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
+import { HumanMessagePromptTemplate } from '@langchain/core/prompts';
 import { PodcastCreator } from '@/workflow/narrative/podcast_creator';
 import { TopMentionData } from '@/utils/elfa.types';
 import { calculateEngagementScoreWithoutBookmarks } from '@/workflow/narrative/engagement_calculator';
-import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage } from '@langchain/core/messages';
 
 // Interface for our token insights
 interface TokenInsight {
