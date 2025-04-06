@@ -65,6 +65,7 @@ export const main = async (): Promise<void> => {
     'trump',
     'prompt',
     'hype',
+    'figure',
   ];
 
   try {
@@ -221,7 +222,6 @@ async function generateTokenInsight(
 
   // Create a prompt for generating insights
   const prompt = HumanMessagePromptTemplate.fromTemplate(`
-  You are a cryptocurrency market analyst specializing in token analysis. 
   I'll provide you with several tweets related to the token: {ticker}.
 
   Your task is to analyze these tweets and provide insights about this token.
@@ -254,10 +254,11 @@ async function generateTokenInsight(
     });
 
     const response = await model.invoke([
-      {
-        role: 'user',
-        content: formattedPrompt.toString(),
-      },
+      [
+        'system',
+        'You are a cryptocurrency market analyst specializing in token analysis. ',
+      ],
+      ['human', formattedPrompt.content],
     ]);
 
     // Parse JSON response

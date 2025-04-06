@@ -4,7 +4,8 @@ import { ChatAgent } from '@/workflow/chatbot/agent';
 
 export class Chatter {
   private debug = Debugger.getInstance();
-  private whitelistedChatIds = [-1002574505074, -1002494776074, -4656585527];
+  // Remove or comment out the whitelist
+  // private whitelistedChatIds = [-1002574505074, -1002494776074, -4656585527];
   private agent: ChatAgent;
 
   constructor() {
@@ -65,15 +66,6 @@ export class Chatter {
     */
 
     try {
-      // First check if this is in the whitelisted chats
-      if (
-        ctx.chat?.id &&
-        !this.whitelistedChatIds.includes(ctx.chat.id) &&
-        ctx.chat.type !== 'private'
-      ) {
-        return;
-      }
-
       if (this.isBotMentioned(ctx)) {
         console.log('hell');
         if (
