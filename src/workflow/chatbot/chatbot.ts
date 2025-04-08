@@ -1,15 +1,18 @@
 import { Context } from 'telegraf';
 import { Debugger } from '@/utils/debugger';
 import { ChatAgent } from '@/workflow/chatbot/agent';
+import { AgentSmith } from '@/workflow/chatbot/agent_smith';
 
 export class Chatter {
   private debug = Debugger.getInstance();
   // Remove or comment out the whitelist
-  // private whitelistedChatIds = [-1002574505074, -1002494776074, -4656585527];
+  private whitelistedChatIds = [-1002574505074, -1002494776074, -4656585527];
   private agent: ChatAgent;
+  private agentSmith: AgentSmith;
 
   constructor() {
     this.agent = new ChatAgent();
+    this.agentSmith = new AgentSmith();
   }
 
   async handleMessage(ctx: Context) {
@@ -67,18 +70,24 @@ export class Chatter {
 
     try {
       if (this.isBotMentioned(ctx)) {
-        console.log('hell');
         if (
           ctx.message &&
           'text' in ctx.message &&
           ctx.message.text &&
           ctx.chat?.id
         ) {
-          console.log('hellzxc');
-          const response = await this.agent.generateReply(
-            ctx.message.text,
-            ctx.chat.id.toString(),
-          );
+          let response;
+          if (this.whitelistedChatIds.includes(ctx.chat.id)) {
+            response = await this.agentSmith.generateReply(
+              ctx.message.text,
+              ctx.chat.id.toString(),
+            );
+          } else {
+            response = await this.agent.generateReply(
+              ctx.message.text,
+              ctx.chat.id.toString(),
+            );
+          }
           ctx.reply(response);
         }
       }
