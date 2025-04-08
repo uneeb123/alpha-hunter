@@ -31,8 +31,8 @@ const main = async (): Promise<void> => {
 
     // // Test mentions endpoint
     // debug.info('Testing mentions endpoint...');
-    // const mentionsResponse = await elfaClient.getMentions();
-    // debug.info('Mentions response:', mentionsResponse);
+    const mentionsResponse = await elfaClient.getMentions();
+    debug.info('Mentions response:', mentionsResponse);
 
     // // Test top-mentions endpoint
     // debug.info('Testing top-mentions endpoint...');
@@ -42,11 +42,11 @@ const main = async (): Promise<void> => {
     // debug.info('Top mentions response:', topMentionsResponse);
 
     // // Test search-mentions endpoint
-    debug.info('Testing search-mentions endpoint...');
-    const searchResponse = await elfaClient.searchMentions({
-      keywords: 'World Liberty Financial',
-    });
-    debug.info('Search mentions response:', searchResponse);
+    // debug.info('Testing search-mentions endpoint...');
+    // const searchResponse = await elfaClient.searchMentions({
+    // keywords: 'World Liberty Financial',
+    // });
+    // debug.info('Search mentions response:', searchResponse);
 
     // // Test trending-tokens endpoint
     // debug.info('Testing trending-tokens endpoint...');

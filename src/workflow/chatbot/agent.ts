@@ -1,4 +1,3 @@
-import { TavilySearchResults } from '@langchain/community/tools/tavily_search';
 import { ChatOpenAI } from '@langchain/openai';
 import {
   HumanMessage,
@@ -7,107 +6,14 @@ import {
 } from '@langchain/core/messages';
 import { ToolNode } from '@langchain/langgraph/prebuilt';
 import { StateGraph, MessagesAnnotation } from '@langchain/langgraph';
-import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
-import { ElfaClient } from '@/utils/elfa';
-import { DefiLlamaClient } from '@/utils/defillama';
-import { TopMentionData } from '@/utils/elfa.types';
+import { tools } from '@/workflow/chatbot/tools';
 
 export class ChatAgent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private app: any;
   private conversationStates: Map<string, typeof MessagesAnnotation.State>;
-  private elfaClient: ElfaClient;
 
   constructor() {
-    this.elfaClient = new ElfaClient();
-
-    const getTokenInfo = tool(
-      async (input) => {
-        try {
-          const response = await this.elfaClient.getTopMentions({
-            ticker: input.token,
-            timeWindow: '24h',
-            pageSize: 5,
-            includeAccountDetails: true,
-          });
-
-          if (response.data.data.length === 0) {
-            return `no recent mentions found for ${input.token}`;
-          }
-
-          const mentions = response.data.data
-            .map(
-              (m: TopMentionData) =>
-                `"${m.content}" - @${m.twitter_account_info?.username || 'unknown'}`,
-            )
-            .join('\n');
-          return `recent mentions for ${input.token}:\n${mentions}`;
-        } catch {
-          return `sorry, couldn't get info for ${input.token}`;
-        }
-      },
-      {
-        name: 'get_token_info',
-        description: 'Get recent social mentions for a token/ticker symbol',
-        schema: z.object({
-          token: z.string().describe('Token/ticker symbol to get mentions for'),
-        }),
-      },
-    );
-
-    const getYieldInfo = tool(
-      async () => {
-        try {
-          const client = new DefiLlamaClient();
-          const pools = await client.getPools();
-
-          const minTvlUsd = 1_000_000;
-
-          // Apply the same filtering logic as in yield.ts
-          const stableUpPools = pools.data.filter(
-            (pool) => pool.predictions.predictedClass === 'Stable/Up',
-          );
-          const highTvlPools = stableUpPools.filter(
-            (pool) => pool.tvlUsd >= minTvlUsd,
-          );
-
-          // Sort by APY and get top 3
-          const topPools = highTvlPools
-            .sort((a, b) => (b.apy || 0) - (a.apy || 0))
-            .slice(0, 3);
-
-          if (topPools.length === 0) {
-            return 'no yield opportunities match the criteria right now.';
-          }
-
-          // Format response in a casual way
-          const response = topPools
-            .map(
-              (pool, i) =>
-                `${i + 1}. ${pool.symbol} on ${pool.project} (${pool.chain}) - ${pool.apy?.toFixed(2)}% apy`,
-            )
-            .join('\n');
-
-          return `here are the top yield opportunities:\n${response}`;
-        } catch {
-          return 'sorry, had trouble getting yield data right now.';
-        }
-      },
-      {
-        name: 'get_yield_info',
-        description: 'Get best yield generating opportunities',
-        schema: z.object({
-          noOp: z.string().optional().describe('No-op parameter.'),
-        }),
-      },
-    );
-
-    const tools = [
-      new TavilySearchResults({ maxResults: 3 }),
-      getYieldInfo,
-      getTokenInfo,
-    ];
     const toolNode = new ToolNode(tools);
     const model = new ChatOpenAI({
       model: 'gpt-4o-mini',

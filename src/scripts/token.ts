@@ -66,6 +66,10 @@ export const main = async (): Promise<void> => {
     'prompt',
     'hype',
     'figure',
+    'hiber',
+    'spy',
+    'xrp',
+    'remus',
   ];
 
   try {
