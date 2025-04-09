@@ -70,6 +70,8 @@ export const main = async (): Promise<void> => {
     'spy',
     'xrp',
     'remus',
+    'glxy',
+    'fartcoin',
   ];
 
   try {

@@ -16,6 +16,8 @@ export interface Secrets {
   falApiKey: string;
   productionUrl: string;
   tavilyApiKey: string;
+  bitqueryAccessToken: string;
+  heliusApiKey: string;
 }
 
 class SecretsManager {
@@ -38,6 +40,8 @@ class SecretsManager {
       FAL_API_KEY,
       PRODUCTION_URL,
       TAVILY_API_KEY,
+      BITQUERY_ACCESS_TOKEN,
+      HELIUS_API_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -55,6 +59,8 @@ class SecretsManager {
       ['FAL_API_KEY', FAL_API_KEY],
       ['PRODUCTION_URL', PRODUCTION_URL],
       ['TAVILY_API_KEY', TAVILY_API_KEY],
+      ['BITQUERY_ACCESS_TOKEN', BITQUERY_ACCESS_TOKEN],
+      ['HELIUS_API_KEY', HELIUS_API_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -81,6 +87,8 @@ class SecretsManager {
       falApiKey: FAL_API_KEY!,
       productionUrl: PRODUCTION_URL!,
       tavilyApiKey: TAVILY_API_KEY!,
+      bitqueryAccessToken: BITQUERY_ACCESS_TOKEN!,
+      heliusApiKey: HELIUS_API_KEY!,
     };
   }
 

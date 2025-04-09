@@ -68,6 +68,7 @@ export class PodcastCreator {
   private async postToTwitter(
     headline: string,
     sources: string[],
+    shouldReply: boolean = false,
   ): Promise<void> {
     try {
       const tweetsManager = new TweetsManager(
@@ -89,14 +90,17 @@ export class PodcastCreator {
         (source) => !/^\d+$/.test(source),
       );
 
-      if (validSources.length > 0) {
-        await tweetsManager.replyToTweet(
-          response.data.id,
-          `Sources: ${validSources.map((source) => `@${source}`).join(' ')}`,
-        );
-      } else {
-        this.debug.info('No valid sources to mention, skipping reply tweet');
+      if (shouldReply) {
+        if (validSources.length > 0) {
+          await tweetsManager.replyToTweet(
+            response.data.id,
+            `Sources: ${validSources.map((source) => `@${source}`).join(' ')}`,
+          );
+        } else {
+          this.debug.info('No valid sources to mention, skipping reply tweet');
+        }
       }
+
       this.debug.info('Posted tweet with podcast media');
     } catch (error) {
       this.debug.error(`Failed to post to Twitter: ${error}`);

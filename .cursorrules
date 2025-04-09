@@ -1,0 +1,2 @@
+- Use pnpm for package management
+- Run test scripts with npx tsx. For example, npx tsx src/scripts/test/helius.ts
