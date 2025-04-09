@@ -4,15 +4,8 @@ import {
   HeliusRpcRequest,
   HeliusRpcResponse,
   HeliusAssetResponse,
+  TokenMetadata,
 } from '@/types';
-
-interface TokenMetadata {
-  name: string;
-  symbol: string;
-  decimals: number;
-  supply: number;
-  image?: string;
-}
 
 export class HeliusClient {
   private readonly apiKey: string;

@@ -6,7 +6,7 @@ import {
 } from '@langchain/core/messages';
 import { ToolNode } from '@langchain/langgraph/prebuilt';
 import { StateGraph, MessagesAnnotation } from '@langchain/langgraph';
-import { tools } from '@/workflow/chatbot/tools';
+import { agentSmithTools } from '@/workflow/chatbot/tools';
 
 export class AgentSmith {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,11 +14,11 @@ export class AgentSmith {
   private conversationStates: Map<string, typeof MessagesAnnotation.State>;
 
   constructor() {
-    const toolNode = new ToolNode(tools);
+    const toolNode = new ToolNode(agentSmithTools);
     const model = new ChatOpenAI({
       model: 'gpt-4o-mini',
       temperature: 0,
-    }).bindTools(tools);
+    }).bindTools(agentSmithTools);
 
     // Define the function that determines whether to continue or not
     function shouldContinue({ messages }: typeof MessagesAnnotation.State) {

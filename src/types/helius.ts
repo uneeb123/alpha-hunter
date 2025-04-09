@@ -193,3 +193,11 @@ export interface HeliusRpcResponse {
     message: string;
   };
 }
+
+export interface TokenMetadata {
+  name: string;
+  symbol: string;
+  decimals: number;
+  supply: number;
+  image?: string;
+}
