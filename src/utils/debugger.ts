@@ -9,11 +9,14 @@ let debuggerInstance: Debugger | null = null;
 export class Debugger {
   private config: DebugConfig;
 
-  private constructor(config: DebugConfig) {
-    this.config = config;
+  private constructor(config?: DebugConfig) {
+    this.config = {
+      enabled: config?.enabled ?? true,
+      level: config?.level ?? 'info',
+    };
   }
 
-  static create(config: DebugConfig): Debugger {
+  static create(config?: DebugConfig): Debugger {
     if (!debuggerInstance) {
       debuggerInstance = new Debugger(config);
     }

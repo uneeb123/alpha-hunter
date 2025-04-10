@@ -18,6 +18,7 @@ export interface Secrets {
   tavilyApiKey: string;
   bitqueryAccessToken: string;
   heliusApiKey: string;
+  sniperooApiKey: string;
 }
 
 class SecretsManager {
@@ -42,6 +43,7 @@ class SecretsManager {
       TAVILY_API_KEY,
       BITQUERY_ACCESS_TOKEN,
       HELIUS_API_KEY,
+      SNIPEROO_API_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -61,6 +63,7 @@ class SecretsManager {
       ['TAVILY_API_KEY', TAVILY_API_KEY],
       ['BITQUERY_ACCESS_TOKEN', BITQUERY_ACCESS_TOKEN],
       ['HELIUS_API_KEY', HELIUS_API_KEY],
+      ['SNIPEROO_API_KEY', SNIPEROO_API_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -89,6 +92,7 @@ class SecretsManager {
       tavilyApiKey: TAVILY_API_KEY!,
       bitqueryAccessToken: BITQUERY_ACCESS_TOKEN!,
       heliusApiKey: HELIUS_API_KEY!,
+      sniperooApiKey: SNIPEROO_API_KEY!,
     };
   }
 

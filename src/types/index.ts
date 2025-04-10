@@ -191,3 +191,4 @@ export interface Scrape {
 export * from './events';
 export * from './helius';
 export * from './bitquery';
+export * from './sniperoo';
