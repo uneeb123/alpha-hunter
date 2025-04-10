@@ -19,6 +19,7 @@ export interface Secrets {
   bitqueryAccessToken: string;
   heliusApiKey: string;
   sniperooApiKey: string;
+  adminPrivateKey: string;
 }
 
 class SecretsManager {
@@ -44,6 +45,7 @@ class SecretsManager {
       BITQUERY_ACCESS_TOKEN,
       HELIUS_API_KEY,
       SNIPEROO_API_KEY,
+      ADMIN_PRIVATE_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -64,6 +66,7 @@ class SecretsManager {
       ['BITQUERY_ACCESS_TOKEN', BITQUERY_ACCESS_TOKEN],
       ['HELIUS_API_KEY', HELIUS_API_KEY],
       ['SNIPEROO_API_KEY', SNIPEROO_API_KEY],
+      ['ADMIN_PRIVATE_KEY', ADMIN_PRIVATE_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -93,6 +96,7 @@ class SecretsManager {
       bitqueryAccessToken: BITQUERY_ACCESS_TOKEN!,
       heliusApiKey: HELIUS_API_KEY!,
       sniperooApiKey: SNIPEROO_API_KEY!,
+      adminPrivateKey: ADMIN_PRIVATE_KEY!,
     };
   }
 
