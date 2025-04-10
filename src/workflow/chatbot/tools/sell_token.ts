@@ -30,12 +30,12 @@ export const sellToken = tool(
         .map(
           (result, index) => `
 Sale ${index + 1}:
-Transaction ID: ${result.transactionId}
-Token Address: ${result.tokenAddress}
-SOL Amount: ${result.solAmount}
-Token Amount: ${result.tokenAmount}
-Date: ${new Date(result.transactionDate).toLocaleString()}
-Status: ${result.status}`,
+Transaction ID: ${result.sellTransaction.transactionId}
+Position ID: ${result.sellTransaction.positionId}
+SOL Amount: ${result.sellTransaction.solAmount}
+Token Amount: ${result.sellTransaction.tokenAmount}
+Date: ${new Date(result.sellTransaction.transactionDate).toLocaleString()}
+Type: ${result.sellTransaction.positionTransactionTypeEnum}`,
         )
         .join('\n');
 
@@ -50,7 +50,7 @@ Status: ${result.status}`,
   },
   {
     name: 'sell_token',
-    description: 'Sell token',
+    description: 'Sell a token using Sniperoo with specified parameters',
     schema: z.object({
       tokenAddress: z.string().describe('The address of the token to sell'),
       percentage: z

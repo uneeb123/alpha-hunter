@@ -1,8 +1,9 @@
 export interface Wallet {
+  id: number;
   address: string;
+  name: string;
   solBalance: number;
-  isVisible: boolean;
-  lastUpdated: string;
+  hidden: boolean;
 }
 
 export interface BuyTokenParams {
@@ -10,35 +11,6 @@ export interface BuyTokenParams {
   inputAmount: number;
   profitPercentage?: number;
   stopLossPercentage?: number;
-  slippageInPercentage?: number;
-  prioritizationFeeInSolana?: number;
-  jitoTipInSolana?: number;
-}
-
-export interface BuyTokenResponse {
-  transactionId: string;
-  tokenAddress: string;
-  solAmount: number;
-  tokenAmount: number;
-  transactionDate: string;
-  status: 'pending' | 'completed' | 'failed';
-}
-
-export interface SellTokenParams {
-  tokenAddress: string;
-  percentage?: number;
-  slippageInPercentage?: number;
-  prioritizationFeeInSolana?: number;
-  jitoTipInSolana?: number;
-}
-
-export interface SellTokenResponse {
-  transactionId: string;
-  tokenAddress: string;
-  solAmount: number;
-  tokenAmount: number;
-  transactionDate: string;
-  status: 'pending' | 'completed' | 'failed';
 }
 
 interface Purchase {
@@ -46,6 +18,34 @@ interface Purchase {
   tokenAmount: string;
   tokenAmountInUSD: string;
   tokenPriceInUSD: string;
+}
+
+export interface BuyTokenResponse {
+  purchases: Purchase[];
+  solPriceInUSD: string;
+}
+
+export interface SellTokenParams {
+  tokenAddress: string;
+  percentage?: number;
+  prioritizationFeeInSolana?: number;
+  slippageInPercentage?: number;
+  jitoTipInSolana?: number;
+}
+
+interface SellTransaction {
+  id: number;
+  positionTransactionTypeEnum: string;
+  transactionId: string;
+  positionId: number;
+  solAmount: string;
+  tokenAmount: string;
+  transactionDate: string;
+}
+
+export interface SellTokenResponse {
+  sellTransaction: SellTransaction;
+  txTimestamp: number;
 }
 
 interface Transaction {

@@ -8,9 +8,6 @@ export const buyToken = tool(
     inputAmount,
     profitPercentage,
     stopLossPercentage,
-    slippageInPercentage,
-    prioritizationFeeInSolana,
-    jitoTipInSolana,
   }) => {
     try {
       const sniperoo = new SniperooClient();
@@ -23,24 +20,22 @@ export const buyToken = tool(
         stopLossPercentage: stopLossPercentage
           ? parseFloat(stopLossPercentage)
           : undefined,
-        slippageInPercentage: slippageInPercentage
-          ? parseFloat(slippageInPercentage)
-          : undefined,
-        prioritizationFeeInSolana: prioritizationFeeInSolana
-          ? parseFloat(prioritizationFeeInSolana)
-          : undefined,
-        jitoTipInSolana: jitoTipInSolana
-          ? parseFloat(jitoTipInSolana)
-          : undefined,
       });
 
+      const purchaseSummaries = result.purchases
+        .map(
+          (purchase, index) => `
+Purchase ${index + 1}:
+Transaction: ${purchase.txSignature}
+Token Amount: ${purchase.tokenAmount}
+Token Amount in USD: $${purchase.tokenAmountInUSD}
+Token Price in USD: $${purchase.tokenPriceInUSD}`,
+        )
+        .join('\n\n');
+
       return `Token Purchase Summary:
-Transaction ID: ${result.transactionId}
-Token Address: ${result.tokenAddress}
-SOL Amount: ${result.solAmount}
-Token Amount: ${result.tokenAmount}
-Date: ${new Date(result.transactionDate).toLocaleString()}
-Status: ${result.status}`;
+SOL Price in USD: $${result.solPriceInUSD}
+${purchaseSummaries}`;
     } catch (error) {
       console.error(
         'Error in buyToken:',
@@ -51,7 +46,7 @@ Status: ${result.status}`;
   },
   {
     name: 'buy_token',
-    description: 'Buy token',
+    description: 'Buy a token using Sniperoo with specified parameters',
     schema: z.object({
       tokenAddress: z.string().describe('The address of the token to buy'),
       inputAmount: z.string().describe('The amount of SOL to spend'),
@@ -63,15 +58,6 @@ Status: ${result.status}`;
         .string()
         .optional()
         .describe('Stop loss percentage'),
-      slippageInPercentage: z
-        .string()
-        .optional()
-        .describe('Slippage tolerance percentage'),
-      prioritizationFeeInSolana: z
-        .string()
-        .optional()
-        .describe('Priority fee in SOL'),
-      jitoTipInSolana: z.string().optional().describe('Jito tip amount in SOL'),
     }),
   },
 );
