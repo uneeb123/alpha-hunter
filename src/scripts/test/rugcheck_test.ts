@@ -13,7 +13,7 @@ async function main() {
 
     // Test token report
     // Using BONK token address as an example
-    const tokenAddress = 'B2hahF8hVBSFmffCSMaKPs2r8BkkggGYAbzR3Mrdpump';
+    const tokenAddress = 'CbtZEykapPXbS7UevWCgipchYDrKBzd7zkebheh8pump';
     console.log(`\nFetching token report for ${tokenAddress}...`);
 
     const report = await client.getTokenReport(tokenAddress);

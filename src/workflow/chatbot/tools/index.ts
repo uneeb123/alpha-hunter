@@ -4,6 +4,10 @@ import { getYieldInfo } from './get_yield_info';
 import { getTopTweets } from './get_top_tweets';
 import { getTrendingTokens } from './get_trending_tokens';
 import { getNewlyCreatedTokens } from './get_newly_created_tokens';
+import { getRiskAssessment } from './get_risk_assessment';
+import { getBalance } from './get_balance';
+import { buyToken } from './buy_token';
+import { sellToken } from './sell_token';
 
 export const tools = [
   new TavilySearchResults({ maxResults: 3 }),
@@ -12,6 +16,9 @@ export const tools = [
   getTopTweets,
   getTrendingTokens,
   getNewlyCreatedTokens,
+  getBalance,
+  buyToken,
+  sellToken,
 ];
 
 // Currently no difference
@@ -22,4 +29,8 @@ export const agentSmithTools = [
   getTopTweets,
   getTrendingTokens,
   getNewlyCreatedTokens,
+  getRiskAssessment,
+  getBalance,
+  buyToken,
+  sellToken,
 ];
