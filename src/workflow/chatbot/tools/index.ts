@@ -16,6 +16,7 @@ export const tools = [
   getTopTweets,
   getTrendingTokens,
   getNewlyCreatedTokens,
+  getRiskAssessment,
   getBalance,
   buyToken,
   sellToken,
