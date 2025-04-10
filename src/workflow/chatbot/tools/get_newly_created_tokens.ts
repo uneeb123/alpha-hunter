@@ -2,7 +2,7 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { BitQueryClient } from '@/utils/bitquery_client';
 import { HeliusClient } from '@/utils/helius_client';
-import { PumpSwapPool, TokenMetadata } from '@/types';
+import { GraduatedToken, TokenMetadata } from '@/types';
 
 interface EnrichedToken {
   contractAddress: string;
@@ -19,54 +19,44 @@ interface EnrichedToken {
 export const getNewlyCreatedTokens = tool(
   async () => {
     try {
-      // Initialize clients
       const bitquery = new BitQueryClient();
       const helius = new HeliusClient();
 
-      // Get recently graduated tokens from BitQuery
-      const pools = await bitquery.getRecentPumpSwapPools(10);
+      const tokens = await bitquery.getRecentlyGraduatedToken();
 
-      if (!pools || pools.length === 0) {
+      if (!tokens || tokens.length === 0) {
         return 'no newly created tokens found.';
       }
 
-      // Extract token information and enrich with Helius data
       const enrichedTokens = await Promise.all(
-        pools.map(async (pool: PumpSwapPool) => {
-          // Find the mint token argument from the pool creation instruction
-          const mintArg = pool.Instruction.Program.Arguments.find(
-            (arg) => arg.Name === 'mint_token',
-          );
-
-          if (!mintArg?.Value?.address) {
-            return null;
-          }
-
+        tokens.map(async (token: GraduatedToken) => {
           try {
-            // Get detailed token information from Helius
             const tokenDetails: TokenMetadata = await helius.getTokenDetails(
-              mintArg.Value.address,
+              token.pump_token,
             );
 
             const enrichedToken: EnrichedToken = {
-              contractAddress: mintArg.Value.address,
+              contractAddress: token.pump_token,
               name: tokenDetails.name || 'Unknown',
               symbol: tokenDetails.symbol || 'Unknown',
-              creationTime: pool.Block.Time,
-              creator: pool.Transaction.Signer,
+              creationTime: token.creation_time,
+              creator: token.creator,
               supply: tokenDetails.supply,
               decimals: tokenDetails.decimals,
               image: tokenDetails.image,
             };
 
             return enrichedToken;
-          } catch {
+          } catch (error) {
+            console.error(
+              `Error fetching token details:`,
+              error instanceof Error ? error.message : String(error),
+            );
             return null;
           }
         }),
       );
 
-      // Filter out null values and format response
       const validTokens = enrichedTokens.filter(
         (token): token is EnrichedToken => token !== null,
       );
@@ -86,7 +76,10 @@ export const getNewlyCreatedTokens = tool(
 
       return `Here are the recently created tokens:\n\n${response}`;
     } catch (error) {
-      console.error('Error in getNewlyCreatedTokens:', error);
+      console.error(
+        'Error in getNewlyCreatedTokens:',
+        error instanceof Error ? error.message : String(error),
+      );
       return 'sorry, had trouble fetching new token information.';
     }
   },

@@ -59,8 +59,10 @@ export class BitQueryClient {
     }
   }
 
-  async getRecentlyGraduatedToken(): Promise<GraduatedToken[]> {
-    const pools = await this.getRecentPumpSwapPools(10);
+  async getRecentlyGraduatedToken(
+    limit: number = 10,
+  ): Promise<GraduatedToken[]> {
+    const pools = await this.getRecentPumpSwapPools(limit);
     const graduatedTokens: GraduatedToken[] = [];
 
     pools.forEach((pool) => {
