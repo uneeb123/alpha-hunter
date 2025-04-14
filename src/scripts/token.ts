@@ -72,6 +72,11 @@ export const main = async (): Promise<void> => {
     'remus',
     'glxy',
     'fartcoin',
+    'big',
+    'baby',
+    'refi',
+    'om',
+    'nvda',
   ];
 
   try {
