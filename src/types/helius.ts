@@ -201,3 +201,93 @@ export interface TokenMetadata {
   supply: number;
   image?: string;
 }
+
+/**
+ * SWAP EVENT
+ */
+
+export interface RawTokenAmount {
+  decimals: number;
+  tokenAmount: string;
+}
+
+export interface TokenBalanceChange {
+  mint: string;
+  rawTokenAmount: RawTokenAmount;
+  tokenAccount: string;
+  userAccount: string;
+}
+
+export interface AccountData {
+  account: string;
+  nativeBalanceChange: number;
+  tokenBalanceChanges: TokenBalanceChange[];
+}
+
+export interface Instruction {
+  accounts: string[];
+  data: string;
+  innerInstructions: {
+    accounts: string[];
+    data: string;
+    programId: string;
+  }[];
+  programId: string;
+}
+
+export interface NativeTransfer {
+  amount: number;
+  fromUserAccount: string;
+  toUserAccount: string;
+}
+
+export interface TokenTransfer {
+  fromTokenAccount: string;
+  fromUserAccount: string;
+  mint: string;
+  toTokenAccount: string;
+  toUserAccount: string;
+  tokenAmount: number;
+  tokenStandard: string;
+}
+
+export interface SwapEvent {
+  accountData: AccountData[];
+  description: string;
+  events: Record<string, any>;
+  fee: number;
+  feePayer: string;
+  instructions: Instruction[];
+  nativeTransfers: NativeTransfer[];
+  signature: string;
+  slot: number;
+  source: string;
+  timestamp: number;
+  tokenTransfers: TokenTransfer[];
+  transactionError: null | any;
+  type: 'SWAP';
+}
+
+/**
+ * Simplified swap structure that represents a token swap
+ */
+export interface TokenSwap {
+  // Input token
+  inputMint: string;
+  inputAmount: number;
+  inputDecimals: number;
+  fromUser: string;
+
+  // Output token
+  outputMint: string;
+  outputAmount: number;
+  outputDecimals: number;
+  toUser: string;
+
+  // Transaction details
+  signature: string;
+  timestamp: number;
+  source: string;
+  fee: number;
+  feePayer: string;
+}

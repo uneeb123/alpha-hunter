@@ -20,6 +20,7 @@ export interface Secrets {
   heliusApiKey: string;
   sniperooApiKey: string;
   adminPrivateKey: string;
+  moralisApiKey: string;
 }
 
 class SecretsManager {
@@ -46,6 +47,7 @@ class SecretsManager {
       HELIUS_API_KEY,
       SNIPEROO_API_KEY,
       ADMIN_PRIVATE_KEY,
+      MORALIS_API_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -67,6 +69,7 @@ class SecretsManager {
       ['HELIUS_API_KEY', HELIUS_API_KEY],
       ['SNIPEROO_API_KEY', SNIPEROO_API_KEY],
       ['ADMIN_PRIVATE_KEY', ADMIN_PRIVATE_KEY],
+      ['MORALIS_API_KEY', MORALIS_API_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -97,6 +100,7 @@ class SecretsManager {
       heliusApiKey: HELIUS_API_KEY!,
       sniperooApiKey: SNIPEROO_API_KEY!,
       adminPrivateKey: ADMIN_PRIVATE_KEY!,
+      moralisApiKey: MORALIS_API_KEY!,
     };
   }
 
