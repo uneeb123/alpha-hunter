@@ -32,3 +32,41 @@ export interface TokenPairsResponse {
   page: number;
   cursor: string | null;
 }
+
+export interface HolderChange {
+  change: number;
+  changePercent: number;
+}
+
+export interface HoldersByTime {
+  '5min': HolderChange;
+  '1h': HolderChange;
+  '6h': HolderChange;
+  '24h': HolderChange;
+  '3d': HolderChange;
+  '7d': HolderChange;
+  '30d': HolderChange;
+}
+
+export interface HoldersByAcquisition {
+  swap: number;
+  transfer: number;
+  airdrop: number;
+}
+
+export interface HolderDistribution {
+  whales: number;
+  sharks: number;
+  dolphins: number;
+  fish: number;
+  octopus: number;
+  crabs: number;
+  shrimps: number;
+}
+
+export interface TokenHolderStats {
+  totalHolders: number;
+  holdersByAcquisition: HoldersByAcquisition;
+  holderChange: HoldersByTime;
+  holderDistribution: HolderDistribution;
+}
