@@ -75,3 +75,31 @@ model Processor {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
+
+enum TransactionType {
+  BUY
+  SELL
+}
+
+model Swap {
+  id              Int             @id @default(autoincrement())
+  transactionHash String          @unique
+  transactionType TransactionType
+  blockTimestamp  DateTime
+  blockNumber     Int
+  walletAddress   String
+  pairAddress     String
+  exchangeName    String
+  baseToken       String
+  quoteToken      String
+  baseAmount      Decimal
+  baseAmountUsd   Decimal
+  quoteAmount     Decimal
+  quoteAmountUsd  Decimal
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([transactionHash])
+  @@index([baseToken])
+  @@index([blockTimestamp])
+}

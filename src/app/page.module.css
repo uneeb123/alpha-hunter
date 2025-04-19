@@ -203,3 +203,26 @@ a.secondary {
 .alphaSection {
   margin-bottom: 2rem;
 }
+
+.container {
+  min-height: 100vh;
+  padding: 20px;
+  background: #131722;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.main h1 {
+  color: #d1d4dc;
+  margin-bottom: 20px;
+}
+
+.chartContainer {
+  height: 600px;
+  width: 100%;
+  background: #131722;
+  border-radius: 4px;
+}

@@ -7,6 +7,7 @@ async function main() {
     const moralisClient = MoralisClient.getInstance();
     const tokenToInvestigate = '8i3bdsdDn7a4MchHVVAZApLzxT4NgJhKcSdTNStUpump';
 
+    /*
     // Fetch JOBCOIN pairs
     console.log(`Fetching pairs for JOBCOIN (${JOBCOIN})...`);
     const pairs = await moralisClient.getPairsForToken(JOBCOIN);
@@ -38,6 +39,7 @@ async function main() {
     console.log('\n\nFetching holder stats...');
     const stats = await moralisClient.getTokenHolderStats(tokenToInvestigate);
     console.log(JSON.stringify(stats, null, 2));
+    */
 
     // Fetch and display swaps
     console.log('\n\nFetching recent swaps...');
@@ -48,21 +50,7 @@ async function main() {
     );
 
     console.log(`\nFound ${swaps.length} swaps in the last minute:`);
-    swaps.forEach((swap: MoralisTokenSwap) => {
-      console.log(`\nTransaction: ${swap.transactionHash}`);
-      console.log(`Type: ${swap.transactionType}`);
-      console.log(`Category: ${swap.subCategory}`);
-      console.log(`Exchange: ${swap.exchangeName}`);
-      console.log(`Pair: ${swap.pairLabel}`);
-      console.log(`Wallet: ${swap.walletAddress}`);
-      console.log(
-        `Bought: ${swap.bought.amount} ${swap.bought.symbol} ($${swap.bought.usdAmount.toFixed(2)})`,
-      );
-      console.log(
-        `Sold: ${swap.sold.amount} ${swap.sold.symbol} ($${swap.sold.usdAmount.toFixed(2)})`,
-      );
-      console.log(`Total Value: $${swap.totalValueUsd.toFixed(2)}`);
-    });
+    console.log(JSON.stringify(swaps, null, 2));
   } catch (error) {
     console.error('Error:', error instanceof Error ? error.message : error);
   }

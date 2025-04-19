@@ -83,11 +83,14 @@ interface MoralisSwapToken {
 export interface MoralisTokenSwap {
   transactionHash: string;
   transactionType: string;
+  blockNumber: number;
   subCategory: string;
   blockTimestamp: string;
   exchangeName: string;
-  pairLabel: string;
+  pairAddress: string;
   walletAddress: string;
+  baseToken: string;
+  quoteToken: string;
   bought: MoralisSwapToken;
   sold: MoralisSwapToken;
   totalValueUsd: number;

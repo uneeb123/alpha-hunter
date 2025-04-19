@@ -45,6 +45,7 @@
     "helius-sdk": "^1.4.2",
     "hnswlib-node": "^1.4.2",
     "langchain": "^0.3.20",
+    "lightweight-charts": "3.8.0",
     "memory": "link:@langchain/vectorstores/memory",
     "next": "15.1.7",
     "openai": "^4.89.1",

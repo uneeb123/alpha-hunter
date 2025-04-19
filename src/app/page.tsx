@@ -1,116 +1,49 @@
 import styles from './page.module.css';
-import { PrismaClient } from '@prisma/client';
-
-async function getData() {
-  const prisma = new PrismaClient();
-
-  try {
-    // Fetch alphas with their users
-    const alphas = await prisma.alpha.findMany({
-      include: {
-        users: true,
-      },
-    });
-
-    // Fetch scrapers
-    const scrapers = await prisma.scraper.findMany({
-      orderBy: {
-        startTime: 'desc',
-      },
-    });
-
-    return { alphas, scrapers };
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    throw new Error('Failed to fetch data');
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-// Format date for display
-const formatDate = (date: Date | null | undefined) => {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleString();
-};
+import TradingChart from '@/components/TradingChart';
+import { prisma } from '@/lib/prisma';
+import { TransactionType } from '@prisma/client';
 
 // Add this export to prevent caching
 export const dynamic = 'force-dynamic';
 
+function formatTrades(swaps: any[]) {
+  return swaps.map((swap) => ({
+    time: Math.floor(new Date(swap.blockTimestamp).getTime() / 1000),
+    // If it's a sell, make it negative
+    value:
+      swap.transactionType === TransactionType.SELL
+        ? -Number(swap.baseAmount)
+        : Number(swap.baseAmount),
+  }));
+}
+
 export default async function Home() {
-  const { alphas, scrapers } = await getData();
+  // Get swaps from the last hour
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  const swaps = await prisma.swap.findMany({
+    where: {
+      blockTimestamp: {
+        gte: oneHourAgo,
+      },
+    },
+    orderBy: {
+      blockTimestamp: 'asc',
+    },
+  });
+
+  const trades = formatTrades(swaps);
+  console.log('Number of trades:', trades.length);
+  console.log('Sample trades:', trades.slice(0, 5));
 
   return (
-    <div className={styles.page}>
+    <div className={styles.container}>
       <main className={styles.main}>
-        <h1>Alpha Users</h1>
-        {alphas.length > 0 ? (
-          <div className={styles.tableContainer}>
-            {alphas.map((alpha) => (
-              <div key={alpha.id} className={styles.alphaSection}>
-                <h2>{alpha.name}</h2>
-                <table className={styles.dataTable}>
-                  <thead>
-                    <tr>
-                      <th>Twitter ID</th>
-                      <th>Twitter Name</th>
-                      <th>Twitter User</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {alpha.users.length > 0 ? (
-                      alpha.users.map((user) => (
-                        <tr key={user.id}>
-                          <td>{user.twitterId}</td>
-                          <td>{user.twitterName}</td>
-                          <td>{user.twitterUser}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4}>No users found for this alpha</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No alphas found</p>
-        )}
-
-        <h1>Scrapers</h1>
-        {scrapers.length > 0 ? (
-          <div className={styles.tableContainer}>
-            <table className={styles.dataTable}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Status</th>
-                  <th>Start Time</th>
-                  <th>End Time</th>
-                  <th>Resume Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scrapers.map((scraper) => (
-                  <tr key={scraper.id}>
-                    <td>{scraper.id}</td>
-                    <td>{scraper.status}</td>
-                    <td>{formatDate(scraper.startTime)}</td>
-                    <td>{formatDate(scraper.endTime)}</td>
-                    <td>{formatDate(scraper.resumeTime)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>No scrapers found</p>
-        )}
+        <h1>Token Trading Activity</h1>
+        <div className={styles.chartContainer}>
+          <TradingChart trades={trades} />
+        </div>
       </main>
-      <footer className={styles.footer}></footer>
     </div>
   );
 }
