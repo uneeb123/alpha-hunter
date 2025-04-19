@@ -1,4 +1,4 @@
-export interface TokenInfo {
+interface MoralisTokenInfo {
   tokenAddress: string;
   tokenName: string;
   tokenSymbol: string;
@@ -8,7 +8,7 @@ export interface TokenInfo {
   liquidityUsd: number;
 }
 
-export interface TokenPair {
+export interface MoralisTokenPair {
   exchangeAddress: string;
   exchangeName: string;
   exchangeLogo: string;
@@ -23,38 +23,38 @@ export interface TokenPair {
   baseToken: string;
   quoteToken: string;
   inactivePair: boolean;
-  pair: [TokenInfo, TokenInfo];
+  pair: [MoralisTokenInfo, MoralisTokenInfo];
 }
 
-export interface TokenPairsResponse {
-  pairs: TokenPair[];
+export interface MoralisTokenPairsResponse {
+  pairs: MoralisTokenPair[];
   pageSize: number;
   page: number;
   cursor: string | null;
 }
 
-export interface HolderChange {
+export interface MoralisHolderChange {
   change: number;
   changePercent: number;
 }
 
-export interface HoldersByTime {
-  '5min': HolderChange;
-  '1h': HolderChange;
-  '6h': HolderChange;
-  '24h': HolderChange;
-  '3d': HolderChange;
-  '7d': HolderChange;
-  '30d': HolderChange;
+export interface MoralisHoldersByTime {
+  '5min': MoralisHolderChange;
+  '1h': MoralisHolderChange;
+  '6h': MoralisHolderChange;
+  '24h': MoralisHolderChange;
+  '3d': MoralisHolderChange;
+  '7d': MoralisHolderChange;
+  '30d': MoralisHolderChange;
 }
 
-export interface HoldersByAcquisition {
+export interface MoralisHoldersByAcquisition {
   swap: number;
   transfer: number;
   airdrop: number;
 }
 
-export interface HolderDistribution {
+export interface MoralisHolderDistribution {
   whales: number;
   sharks: number;
   dolphins: number;
@@ -64,9 +64,38 @@ export interface HolderDistribution {
   shrimps: number;
 }
 
-export interface TokenHolderStats {
+export interface MoralisTokenHolderStats {
   totalHolders: number;
-  holdersByAcquisition: HoldersByAcquisition;
-  holderChange: HoldersByTime;
-  holderDistribution: HolderDistribution;
+  holdersByAcquisition: MoralisHoldersByAcquisition;
+  holderChange: MoralisHoldersByTime;
+  holderDistribution: MoralisHolderDistribution;
+}
+
+interface MoralisSwapToken {
+  address: string;
+  name: string;
+  symbol: string;
+  amount: number;
+  usdPrice: number;
+  usdAmount: number;
+}
+
+export interface MoralisTokenSwap {
+  transactionHash: string;
+  transactionType: string;
+  subCategory: string;
+  blockTimestamp: string;
+  exchangeName: string;
+  pairLabel: string;
+  walletAddress: string;
+  bought: MoralisSwapToken;
+  sold: MoralisSwapToken;
+  totalValueUsd: number;
+}
+
+export interface MoralisTokenSwapsResponse {
+  cursor: string | null;
+  page: number;
+  pageSize: number;
+  result: MoralisTokenSwap[];
 }

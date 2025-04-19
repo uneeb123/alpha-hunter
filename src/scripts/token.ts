@@ -79,6 +79,7 @@ export const main = async (): Promise<void> => {
     'nvda',
     'db',
     'fur',
+    'lumo',
   ];
 
   try {
