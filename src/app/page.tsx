@@ -2,29 +2,33 @@ import styles from './page.module.css';
 import TradingChart from '@/components/TradingChart';
 import { prisma } from '@/lib/prisma';
 import { TransactionType } from '@prisma/client';
+import { Time } from 'lightweight-charts';
 
 // Add this export to prevent caching
 export const dynamic = 'force-dynamic';
 
 function formatTrades(swaps: any[]) {
-  return swaps.map((swap) => ({
-    time: Math.floor(new Date(swap.blockTimestamp).getTime() / 1000),
-    // If it's a sell, make it negative
-    value:
+  let runningTotal = 0;
+  return swaps.map((swap) => {
+    const amount =
       swap.transactionType === TransactionType.SELL
         ? -Number(swap.baseAmount)
-        : Number(swap.baseAmount),
-  }));
+        : Number(swap.baseAmount);
+    runningTotal += amount;
+    return {
+      time: Math.floor(new Date(swap.blockTimestamp).getTime() / 1000) as Time,
+      value: runningTotal,
+    };
+  });
 }
 
 export default async function Home() {
-  // Get swaps from the last hour
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   const swaps = await prisma.swap.findMany({
     where: {
       blockTimestamp: {
-        gte: oneHourAgo,
+        gte: twentyFourHoursAgo,
       },
     },
     orderBy: {
@@ -33,8 +37,6 @@ export default async function Home() {
   });
 
   const trades = formatTrades(swaps);
-  console.log('Number of trades:', trades.length);
-  console.log('Sample trades:', trades.slice(0, 5));
 
   return (
     <div className={styles.container}>

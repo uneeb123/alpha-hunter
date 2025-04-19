@@ -29,15 +29,16 @@ export default function TradingChart({ trades }: ChartProps) {
         timeVisible: true,
         secondsVisible: true,
         tickMarkFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          return date.toLocaleString('en-US', {
+          const date = new Date(time * 1000).toLocaleString('en-US', {
             month: 'short',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
             hour12: false,
+            timeZone: 'UTC',
           });
+          return date;
         },
       },
     });
