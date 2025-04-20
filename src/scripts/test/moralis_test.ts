@@ -1,6 +1,4 @@
-import { JOBCOIN } from '../../utils/constants';
 import { MoralisClient } from '../../utils/moralis_client';
-import type { MoralisTokenPair, MoralisTokenSwap } from '@/types';
 
 async function main() {
   try {

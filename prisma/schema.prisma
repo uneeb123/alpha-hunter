@@ -103,3 +103,36 @@ model Swap {
   @@index([baseToken])
   @@index([blockTimestamp])
 }
+
+model TokenMonitor {
+  id            Int      @id @default(autoincrement())
+  tokenAddress  String   @unique
+  isMonitoring  Boolean  @default(false)
+  lastCheckedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isMonitoring])
+}
+
+model RecentToken {
+  id           Int      @id @default(autoincrement())
+  tokenAddress String   @unique
+  isProcessed  Boolean  @default(false)
+  creationTime DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tokenAddress])
+  @@index([isProcessed])
+}
+
+model CheckedToken {
+  id           Int      @id @default(autoincrement())
+  tokenAddress String   @unique
+  score        Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tokenAddress])
+}

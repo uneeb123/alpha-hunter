@@ -1,13 +1,19 @@
 import styles from './page.module.css';
 import TradingChart from '@/components/TradingChart';
 import { prisma } from '@/lib/prisma';
-import { TransactionType } from '@prisma/client';
+import { TransactionType, Prisma } from '@prisma/client';
 import { Time } from 'lightweight-charts';
 
 // Add this export to prevent caching
 export const dynamic = 'force-dynamic';
 
-function formatTrades(swaps: any[]) {
+function formatTrades(
+  swaps: Array<{
+    transactionType: TransactionType;
+    baseAmount: Prisma.Decimal;
+    blockTimestamp: Date;
+  }>,
+) {
   let runningTotal = 0;
   return swaps.map((swap) => {
     const amount =
