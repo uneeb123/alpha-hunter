@@ -34,8 +34,8 @@ export const getMomentum = new DynamicStructuredTool({
       let sellVolume = 0;
       let largestBuy = 0;
       let largestSell = 0;
-      let uniqueBuyers = new Set();
-      let uniqueSellers = new Set();
+      const uniqueBuyers = new Set();
+      const uniqueSellers = new Set();
 
       swaps.forEach((swap: MoralisTokenSwap) => {
         const isBuy = swap.transactionType.toUpperCase() === 'BUY';
