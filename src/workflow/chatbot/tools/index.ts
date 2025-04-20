@@ -8,6 +8,8 @@ import { getRiskAssessment } from './get_risk_assessment';
 import { getBalance } from './get_balance';
 import { buyToken } from './buy_token';
 import { sellToken } from './sell_token';
+import { getHolderData } from './get_holder_data';
+import { getMomentum } from './get_momentum';
 
 export const tools = [
   new TavilySearchResults({ maxResults: 3 }),
@@ -20,6 +22,8 @@ export const tools = [
   getBalance,
   buyToken,
   sellToken,
+  getHolderData,
+  getMomentum,
 ];
 
 // Currently no difference
@@ -34,4 +38,6 @@ export const agentSmithTools = [
   getBalance,
   buyToken,
   sellToken,
+  getHolderData,
+  getMomentum,
 ];

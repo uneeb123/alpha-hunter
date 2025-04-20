@@ -1,11 +1,12 @@
+import { JOBCOIN } from '@/utils/constants';
 import { MoralisClient } from '../../utils/moralis_client';
+import { MoralisTokenPair } from '@/types';
 
 async function main() {
   try {
     const moralisClient = MoralisClient.getInstance();
     const tokenToInvestigate = '8i3bdsdDn7a4MchHVVAZApLzxT4NgJhKcSdTNStUpump';
 
-    /*
     // Fetch JOBCOIN pairs
     console.log(`Fetching pairs for JOBCOIN (${JOBCOIN})...`);
     const pairs = await moralisClient.getPairsForToken(JOBCOIN);
@@ -37,7 +38,6 @@ async function main() {
     console.log('\n\nFetching holder stats...');
     const stats = await moralisClient.getTokenHolderStats(tokenToInvestigate);
     console.log(JSON.stringify(stats, null, 2));
-    */
 
     // Fetch and display swaps
     console.log('\n\nFetching recent swaps...');
