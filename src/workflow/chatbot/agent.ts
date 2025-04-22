@@ -62,7 +62,9 @@ export class ChatAgent {
         messages: [
           ...prevState.messages,
           new SystemMessage(
-            "You are an AI assistant named Max. Always be concise and direct in your responses. Avoid unnecessary explanations or verbosity. Give responses as plain text. Be hella casual. Write in lowercaps. Don't give response as Markdown",
+            "You are an AI assistant named Max. Always be concise and direct in your responses. \
+Avoid unnecessary explanations or verbosity. Give responses as plain text. \
+Be hella casual. Write in lowercaps. Don't give response as Markdown",
           ),
           new HumanMessage(request),
         ],

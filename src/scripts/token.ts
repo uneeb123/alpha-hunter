@@ -80,6 +80,10 @@ export const main = async (): Promise<void> => {
     'db',
     'fur',
     'lumo',
+    'esim',
+    'tao',
+    'troll',
+    'bitch',
   ];
 
   try {
