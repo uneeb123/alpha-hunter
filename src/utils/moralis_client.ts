@@ -6,12 +6,14 @@ import type {
   MoralisTokenSwap,
   MoralisTokenPairsResponse,
   MoralisTokenSwapsResponse,
+  MoralisTokenBalance,
 } from '@/types';
 
 export class MoralisClient {
   private static instance: MoralisClient;
   private readonly apiKey: string;
   private readonly baseUrl = 'https://solana-gateway.moralis.io';
+  private readonly evmBaseUrl = 'https://deep-index.moralis.io/api/v2.2';
 
   private constructor() {
     const { moralisApiKey } = getSecrets();
@@ -23,6 +25,38 @@ export class MoralisClient {
       MoralisClient.instance = new MoralisClient();
     }
     return MoralisClient.instance;
+  }
+
+  /**
+   * Get ERC20 token balances for an address
+   * @param address The wallet address to check balances for
+   * @param chain The chain to query (defaults to 'base')
+   * @returns Array of token balances with metadata
+   */
+  async getERC20Balances(
+    address: string,
+    chain: string = 'base',
+  ): Promise<MoralisTokenBalance[]> {
+    try {
+      const url = `${this.evmBaseUrl}/${address}/erc20?chain=${chain}`;
+
+      const response = await axios.get<MoralisTokenBalance[]>(url, {
+        headers: {
+          accept: 'application/json',
+          'X-API-Key': this.apiKey,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('API Error Response:', error.response?.data);
+        throw new Error(
+          `Failed to fetch ERC20 balances: ${error.response?.data?.message || error.message}`,
+        );
+      }
+      throw error;
+    }
   }
 
   async getPairsForToken(tokenAddress: string): Promise<MoralisTokenPair[]> {
