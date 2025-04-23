@@ -84,6 +84,8 @@ export const main = async (): Promise<void> => {
     'tao',
     'troll',
     'bitch',
+    'wizard',
+    'pengu',
   ];
 
   try {
