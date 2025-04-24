@@ -10,23 +10,25 @@ async function main() {
   console.log('ETH Balance:', ethBalance);
 
   // Get and display all token balances
+  /*
   const tokenBalances = await client.getTokenBalances();
   console.log('\nToken Balances:');
   tokenBalances.forEach((token) => {
     const formattedBalance = formatUnits(BigInt(token.balance), token.decimals);
     console.log(`${token.name} (${token.symbol}): ${formattedBalance}`);
   });
+  */
 
   // Test buying USDC
   console.log('\nTesting USDC Buy...');
   let buyResult;
   try {
-    // Buy 0.001 WETH worth of USDC
-    const buyAmount = BigInt('1000000000000000'); // 0.001 WETH
+    console.log('Attempting to buy USDC with 0.001 WETH');
 
-    buyResult = await client.buy(USDC, buyAmount);
+    buyResult = await client.buy(USDC, '0.001');
     console.log('Buy successful!');
     console.log('Transaction hash:', buyResult.swapHash);
+    console.log('Buy amount: ', buyResult.amountOut);
   } catch (error) {
     console.error('Buy failed:', error);
     process.exit(1);
@@ -39,12 +41,12 @@ async function main() {
   // Test selling USDC
   console.log('\nTesting USDC Sell...');
   try {
-    // Sell 1 USDC
-    const sellAmount = BigInt('1000000'); // 1 USDC (6 decimals)
+    console.log('Attempting to sell 1 USDC');
 
-    const sellResult = await client.sell(USDC, sellAmount);
+    const sellResult = await client.sell(USDC, '1');
     console.log('Sell successful!');
     console.log('Transaction hash:', sellResult.swapHash);
+    console.log('Sell amount: ', sellResult.amountOut);
   } catch (error) {
     console.error('Sell failed:', error);
   }

@@ -6,5 +6,3 @@ export const JOBCOIN = 'AyrQpt5xsVYiN4BqgZdd2tZJAWswT9yLUZmP1jKqpump';
 // Base chain addresses
 export const WETH = '0x4200000000000000000000000000000000000006' as const;
 export const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
-
-export const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';

@@ -9,3 +9,6 @@ export const SWAP_ROUTER_02 =
 // Permit2 address is the same across all chains
 export const PERMIT2_ADDRESS =
   '0x000000000022D473030F116dDEE9F6B43aC78BA3' as const;
+
+export const UNISWAP_V3_FACTORY =
+  '0x33128a8fC17869897dcE68Ed026d694621f6FDfD' as const; // Uniswap V3 factory on Base
