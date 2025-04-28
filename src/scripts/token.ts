@@ -87,6 +87,7 @@ export const main = async (): Promise<void> => {
     'wizard',
     'pengu',
     'zora',
+    'sui',
   ];
 
   try {

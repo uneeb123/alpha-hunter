@@ -106,12 +106,20 @@ export class EthClient {
   public async buy(
     tokenAddress: `0x${string}`,
     amountIn: string,
+    slippageToleranceBps: number = 50,
+    maxGas: number = 800_000,
   ): Promise<{
     swapHash: `0x${string}`;
     receipt: any;
     amountOut: string;
   }> {
-    return this.swap(WETH, tokenAddress, amountIn);
+    return this.swap(
+      WETH,
+      tokenAddress,
+      amountIn,
+      slippageToleranceBps,
+      maxGas,
+    );
   }
 
   /**
@@ -123,12 +131,20 @@ export class EthClient {
   public async sell(
     tokenAddress: `0x${string}`,
     amountIn: string,
+    slippageToleranceBps: number = 50,
+    maxGas: number = 800_000,
   ): Promise<{
     swapHash: `0x${string}`;
     receipt: any;
     amountOut: string;
   }> {
-    return this.swap(tokenAddress, WETH, amountIn);
+    return this.swap(
+      tokenAddress,
+      WETH,
+      amountIn,
+      slippageToleranceBps,
+      maxGas,
+    );
   }
 
   /**
@@ -142,6 +158,7 @@ export class EthClient {
     tokenOut: `0x${string}`,
     amountInRaw: string,
     slippageToleranceBps: number = 50,
+    maxGas: number = 800_000,
   ): Promise<{
     swapHash: `0x${string}`;
     receipt: any;
@@ -264,7 +281,7 @@ export class EthClient {
         TradeType.EXACT_INPUT,
         {
           recipient: this.account.address,
-          slippageTolerance: new Percent(slippageToleranceBps, 10_000), // 0.5%
+          slippageTolerance: new Percent(slippageToleranceBps, 10_000),
           type: SwapType.UNIVERSAL_ROUTER,
           version: UniversalRouterVersion.V2_0,
           inputTokenPermit: {
@@ -284,7 +301,7 @@ export class EthClient {
         to: this.routerAddress,
         data: route.methodParameters!.calldata as `0x${string}`,
         value: BigInt(route.methodParameters!.value || 0),
-        gas: BigInt(800_000),
+        gas: BigInt(maxGas),
       });
 
       // Wait for swap transaction to be mined
