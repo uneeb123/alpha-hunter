@@ -23,6 +23,7 @@ export interface Secrets {
   moralisApiKey: string;
   ethPrivateKey: string;
   alchemyApiKey: string;
+  notiBotToken: string;
 }
 
 class SecretsManager {
@@ -52,6 +53,7 @@ class SecretsManager {
       MORALIS_API_KEY,
       ETH_PRIVATE_KEY,
       ALCHEMY_API_KEY,
+      NOTI_BOT_TOKEN,
     } = process.env;
 
     // Validate all required secrets are present
@@ -76,6 +78,7 @@ class SecretsManager {
       ['MORALIS_API_KEY', MORALIS_API_KEY],
       ['ETH_PRIVATE_KEY', ETH_PRIVATE_KEY],
       ['ALCHEMY_API_KEY', ALCHEMY_API_KEY],
+      ['NOTI_BOT_TOKEN', NOTI_BOT_TOKEN],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -109,6 +112,7 @@ class SecretsManager {
       moralisApiKey: MORALIS_API_KEY!,
       ethPrivateKey: ETH_PRIVATE_KEY!,
       alchemyApiKey: ALCHEMY_API_KEY!,
+      notiBotToken: NOTI_BOT_TOKEN!,
     };
   }
 
