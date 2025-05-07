@@ -43,8 +43,8 @@ export const generateAudio = async (
   const buffer = Buffer.concat(chunks);
 
   // Save the original audio buffer as a temporary file
-  const tempPath = `data/${workflowId}/temp_audio.mp3`;
-  const outputPath = `data/${workflowId}/audio.mp3`;
+  const tempPath = `data/videos/${workflowId}/temp_audio.mp3`;
+  const outputPath = `data/videos/${workflowId}/audio.mp3`;
   await writeFile(tempPath, buffer);
 
   // Modify the audio speed using ffmpeg

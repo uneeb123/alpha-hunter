@@ -45,7 +45,7 @@ export class TweetsManager {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         // Check if file exists and log its size
-        const stats = await fs.stat(`data/${processorId}/podcast.mp4`);
+        const stats = await fs.stat(`data/videos/${processorId}/podcast.mp4`);
         console.log(
           `Video file size: ${stats.size} bytes (${(stats.size / 1024 / 1024).toFixed(2)}MB)`,
         );
@@ -61,7 +61,7 @@ export class TweetsManager {
         // Upload the video file with chunked upload for larger files
         console.log(`Attempt ${attempt}: Starting media upload...`);
         const mediaId = await this.client.v1.uploadMedia(
-          `data/${processorId}/podcast.mp4`,
+          `data/videos/${processorId}/podcast.mp4`,
           {
             mimeType: 'video/mp4',
             longVideo: true,

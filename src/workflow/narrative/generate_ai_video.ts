@@ -190,7 +190,7 @@ export const generate_ai_video = async (
   const debug = Debugger.getInstance();
   debug.info('Generating AI video');
 
-  const outputDir = path.join('data', processorId.toString());
+  const outputDir = path.join('data', 'videos', processorId.toString());
 
   // Create output directory if it doesn't exist
   if (!fs.existsSync(outputDir)) {

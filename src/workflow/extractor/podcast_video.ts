@@ -123,7 +123,7 @@ export const generatePodcastVideo = async (
     `Transcription object: ${JSON.stringify(transcription, null, 2)}`,
   );
 
-  const outputDir = path.join('data', processorId.toString());
+  const outputDir = path.join('data', 'videos', processorId.toString());
 
   // Use custom paths if provided, otherwise use default paths
   const audioPath = customAudioPath || path.join(outputDir, 'audio.mp3');

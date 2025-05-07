@@ -56,7 +56,7 @@ async function transcribeAudio(
 async function main() {
   try {
     // Get the audio file path from command line arguments or use a default
-    const audioFilePath = process.argv[2] || 'data/68/audio.mp3';
+    const audioFilePath = process.argv[2] || 'data/videos/68/audio.mp3';
 
     // Check if the file path is valid
     if (!audioFilePath) {

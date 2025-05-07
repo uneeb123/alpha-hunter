@@ -88,6 +88,8 @@ export const main = async (): Promise<void> => {
     'pengu',
     'zora',
     'sui',
+    'wagmi',
+    'bera',
   ];
 
   try {

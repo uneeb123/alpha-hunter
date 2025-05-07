@@ -38,7 +38,7 @@ export const generatePodcastAudio = async (
   const speed = options.speed || 1.0; // Default to normal speed if not specified
 
   // Create the output directory
-  const outputDir = path.join('data', processorId.toString());
+  const outputDir = path.join('data', 'videos', processorId.toString());
   await mkdir(outputDir, { recursive: true });
 
   const client = new ElevenLabsClient({
