@@ -76,6 +76,8 @@ model Processor {
   updatedAt        DateTime @updatedAt
 }
 
+// QUANTITATIVE
+
 enum TransactionType {
   BUY
   SELL
@@ -135,4 +137,31 @@ model CheckedToken {
   updatedAt    DateTime @updatedAt
 
   @@index([tokenAddress])
+}
+
+// REVISED QUALITATIVE
+
+model Tweet {
+  id        String   @id // Twitter's tweet ID
+  text      String   @db.Text
+  authorId  String // Twitter user ID
+  vectorId  String? // Pinecone vector ID
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model UserTimeline {
+  id             Int       @id @default(autoincrement())
+  twitterId      String    @unique // Twitter user ID
+  lastTweetId    String? // Last processed tweet ID
+  lastSynced     DateTime?
+  nextRun        DateTime?
+  rateLimitReset DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([nextRun])
 }

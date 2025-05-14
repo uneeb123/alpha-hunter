@@ -1,3 +1,6 @@
 - Use pnpm for package management
 - Run test scripts with npx tsx. For example, npx tsx src/scripts/test/helius.ts
 - When creating class, private methods should be below public methods
+- We use axios for making API calls
+- For ORM, we use Prisma
+- All secrets are managed in src/utils/secrets.ts, don't use environment variables directly

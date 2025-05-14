@@ -6,6 +6,7 @@ export interface Secrets {
   twitterApiSecret: string;
   twitterAccessToken: string;
   twitterAccessSecret: string;
+  twitterBearerToken: string;
   anthropicApiKey: string;
   elevenLabsApiKey: string;
   openaiApiKey: string;
@@ -24,6 +25,7 @@ export interface Secrets {
   ethPrivateKey: string;
   alchemyApiKey: string;
   notiBotToken: string;
+  qstashToken: string;
 }
 
 class SecretsManager {
@@ -36,6 +38,7 @@ class SecretsManager {
       TWITTER_API_SECRET_KEY,
       TWITTER_ACCESS_TOKEN,
       TWITTER_ACCESS_TOKEN_SECRET,
+      TWITTER_BEARER_TOKEN,
       ANTHROPIC_API_KEY,
       ELEVENLABS_API_KEY,
       OPENAI_API_KEY,
@@ -54,6 +57,7 @@ class SecretsManager {
       ETH_PRIVATE_KEY,
       ALCHEMY_API_KEY,
       NOTI_BOT_TOKEN,
+      QSTASH_TOKEN,
     } = process.env;
 
     // Validate all required secrets are present
@@ -62,6 +66,7 @@ class SecretsManager {
       ['TWITTER_API_SECRET_KEY', TWITTER_API_SECRET_KEY],
       ['TWITTER_ACCESS_TOKEN', TWITTER_ACCESS_TOKEN],
       ['TWITTER_ACCESS_TOKEN_SECRET', TWITTER_ACCESS_TOKEN_SECRET],
+      ['TWITTER_BEARER_TOKEN', TWITTER_BEARER_TOKEN],
       ['ANTHROPIC_API_KEY', ANTHROPIC_API_KEY],
       ['ELEVENLABS_API_KEY', ELEVENLABS_API_KEY],
       ['AWS_REGION', AWS_REGION],
@@ -79,6 +84,7 @@ class SecretsManager {
       ['ETH_PRIVATE_KEY', ETH_PRIVATE_KEY],
       ['ALCHEMY_API_KEY', ALCHEMY_API_KEY],
       ['NOTI_BOT_TOKEN', NOTI_BOT_TOKEN],
+      ['QSTASH_TOKEN', QSTASH_TOKEN],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -95,6 +101,7 @@ class SecretsManager {
       twitterApiSecret: TWITTER_API_SECRET_KEY!,
       twitterAccessToken: TWITTER_ACCESS_TOKEN!,
       twitterAccessSecret: TWITTER_ACCESS_TOKEN_SECRET!,
+      twitterBearerToken: TWITTER_BEARER_TOKEN!,
       anthropicApiKey: ANTHROPIC_API_KEY!,
       elevenLabsApiKey: ELEVENLABS_API_KEY!,
       openaiApiKey: OPENAI_API_KEY!,
@@ -113,6 +120,7 @@ class SecretsManager {
       ethPrivateKey: ETH_PRIVATE_KEY!,
       alchemyApiKey: ALCHEMY_API_KEY!,
       notiBotToken: NOTI_BOT_TOKEN!,
+      qstashToken: QSTASH_TOKEN!,
     };
   }
 
