@@ -112,6 +112,7 @@ async function main() {
       error instanceof Error ? error.message : JSON.stringify(error),
     );
     // Proceed with whatever users we have so far
+    // ...
   }
 
   // 4. Deduplicate by id
