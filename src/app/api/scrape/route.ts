@@ -1,7 +1,7 @@
 import { Debugger } from '@/utils/debugger';
 import { NextResponse } from 'next/server';
 // import { ScraperManager } from '@/workflow/scrapper/scraper_manager';
-import { getSecrets } from '@/utils/secrets';
+// import { getSecrets } from '@/utils/secrets';
 // import { PrismaClient } from '@prisma/client';
 
 const debug = Debugger.create({
@@ -16,7 +16,7 @@ export const maxDuration = 300;
 
 export async function GET() {
   try {
-    const secrets = getSecrets();
+    // const secrets = getSecrets();
     // const scraperManager = new ScraperManager(
     //   secrets.twitterApiKey,
     //   secrets.twitterApiSecret,
