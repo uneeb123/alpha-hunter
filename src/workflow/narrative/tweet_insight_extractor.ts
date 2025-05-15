@@ -3,7 +3,7 @@ import { MentionData, ElfaClient } from '@/utils/elfa';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { calculateEngagementScoreWithoutBookmarks } from './engagement_calculator';
-import { getUsernameById } from '@/utils/x';
+// import { getUsernameById } from '@/utils/x';
 
 // Define an interface for the insight return type
 export interface TweetInsight {
@@ -150,6 +150,7 @@ export class TweetInsightExtractor {
       const top10Mentions = scoredMentions.slice(0, 10);
 
       // Get usernames for each mention
+      /*
       const mentionsWithUsernames = await Promise.all(
         top10Mentions.map(async ({ mention, score }) => {
           try {
@@ -161,6 +162,12 @@ export class TweetInsightExtractor {
             );
             return { mention, score, username: mention.twitter_user_id };
           }
+        }),
+      );
+      */
+      const mentionsWithUsernames = await Promise.all(
+        top10Mentions.map(async ({ mention, score }) => {
+          return { mention, score, username: mention.twitter_user_id };
         }),
       );
 

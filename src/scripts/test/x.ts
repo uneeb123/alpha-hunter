@@ -1,11 +1,10 @@
+/*
 import * as dotenv from 'dotenv';
 import { search } from '../../utils/x';
 
 dotenv.config();
 
-/**
- * Test function to demonstrate using the getRecentSearchCounts function
- */
+
 async function testTwitterSearch() {
   try {
     // Call the getRecentSearchCounts function with "SEC" as the query
@@ -27,3 +26,4 @@ async function testTwitterSearch() {
 testTwitterSearch()
   .then(() => console.log('Test completed'))
   .catch((err) => console.error('Test failed:', err));
+*/

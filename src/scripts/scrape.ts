@@ -1,3 +1,4 @@
+/*
 import * as dotenv from 'dotenv';
 import { Command } from 'commander';
 import { Debugger, DebugConfig } from '@/utils/debugger';
@@ -68,3 +69,4 @@ main().catch((error) => {
   console.error('Error running main:', error);
   process.exit(1);
 });
+*/

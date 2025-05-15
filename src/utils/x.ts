@@ -1,14 +1,9 @@
+/*
 import { getSecrets } from '@/utils/secrets';
 import { TwitterApi, TweetSearchRecentV2Paginator } from 'twitter-api-v2';
 import { PrismaClient } from '@prisma/client';
 import { Debugger } from '@/utils/debugger';
 
-/**
- * Fetches recent search counts from Twitter/X API
- * @param query - Search query string
- * @param options - Additional search parameters
- * @returns Promise with search count data
- */
 export async function search(
   query: string,
   options?: {
@@ -131,3 +126,4 @@ export async function getUsernameById(userId: string): Promise<string> {
     throw error;
   }
 }
+*/

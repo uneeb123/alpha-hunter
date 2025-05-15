@@ -1,8 +1,9 @@
+/*
 import { Debugger } from '@/utils/debugger';
 import { NextResponse } from 'next/server';
 import { ScraperManager } from '@/workflow/scrapper/scraper_manager';
 import { getSecrets } from '@/utils/secrets';
-import { PrismaClient } from '@prisma/client';
+// import { PrismaClient } from '@prisma/client';
 
 const debug = Debugger.create({
   enabled: true, // TODO: use a better debugger
@@ -67,3 +68,4 @@ export async function GET() {
     );
   }
 }
+*/

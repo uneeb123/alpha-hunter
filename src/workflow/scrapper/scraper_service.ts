@@ -1,3 +1,4 @@
+/*
 import { TwitterApi } from 'twitter-api-v2';
 import { Debugger } from '@/utils/debugger';
 import { PrismaClient } from '@prisma/client';
@@ -161,3 +162,4 @@ export class ScraperService {
     }
   }
 }
+*/

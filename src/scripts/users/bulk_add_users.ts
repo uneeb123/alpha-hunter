@@ -1,3 +1,4 @@
+/*
 import * as dotenv from 'dotenv';
 import { Command } from 'commander';
 import { PrismaClient } from '@prisma/client';
@@ -155,3 +156,4 @@ main().catch((error) => {
   console.error('Error running main:', error);
   process.exit(1);
 });
+*/
