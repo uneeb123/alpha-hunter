@@ -82,23 +82,24 @@ function filterUsers(users: User[], filters: Filter[]) {
   );
 }
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string };
-}) {
-  const sortKey =
-    (searchParams?.sortKey as keyof User) || 'smartFollowingCount';
-  const direction = (searchParams?.direction as 'asc' | 'desc') || 'desc';
-  const filters = parseFilters(searchParams);
+export default async function Home({ searchParams }: { searchParams?: any }) {
+  // Always resolve searchParams to a plain object
+  const params: Record<string, string> =
+    searchParams && typeof searchParams.then === 'function'
+      ? await searchParams
+      : (searchParams ?? {});
+
+  const sortKey = (params?.sortKey as keyof User) || 'smartFollowingCount';
+  const direction = (params?.direction as 'asc' | 'desc') || 'desc';
+  const filters = parseFilters(params);
 
   const users = await prisma.user.findMany();
   const filteredUsers = filterUsers(users, filters);
   const sortedUsers = sortUsers(filteredUsers, sortKey, direction);
 
-  // Sanitize searchParams to a plain object of strings
+  // Sanitize params to a plain object of strings
   const safeSearchParams = Object.fromEntries(
-    Object.entries(searchParams ?? {}).filter(
+    Object.entries(params ?? {}).filter(
       ([k, v]) => typeof k === 'string' && typeof v === 'string',
     ),
   );
