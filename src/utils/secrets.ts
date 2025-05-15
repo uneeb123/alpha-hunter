@@ -26,6 +26,8 @@ export interface Secrets {
   alchemyApiKey: string;
   notiBotToken: string;
   qstashToken: string;
+  upstashRedisUrl: string;
+  upstashRedisToken: string;
 }
 
 class SecretsManager {
@@ -58,6 +60,8 @@ class SecretsManager {
       ALCHEMY_API_KEY,
       NOTI_BOT_TOKEN,
       QSTASH_TOKEN,
+      UPSTASH_REDIS_URL,
+      UPSTASH_REDIS_TOKEN,
     } = process.env;
 
     // Validate all required secrets are present
@@ -85,6 +89,8 @@ class SecretsManager {
       ['ALCHEMY_API_KEY', ALCHEMY_API_KEY],
       ['NOTI_BOT_TOKEN', NOTI_BOT_TOKEN],
       ['QSTASH_TOKEN', QSTASH_TOKEN],
+      ['UPSTASH_REDIS_URL', UPSTASH_REDIS_URL],
+      ['UPSTASH_REDIS_TOKEN', UPSTASH_REDIS_TOKEN],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -121,6 +127,8 @@ class SecretsManager {
       alchemyApiKey: ALCHEMY_API_KEY!,
       notiBotToken: NOTI_BOT_TOKEN!,
       qstashToken: QSTASH_TOKEN!,
+      upstashRedisUrl: UPSTASH_REDIS_URL!,
+      upstashRedisToken: UPSTASH_REDIS_TOKEN!,
     };
   }
 

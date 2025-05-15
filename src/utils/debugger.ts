@@ -27,7 +27,9 @@ export class Debugger {
     if (!debuggerInstance) {
       // Default configuration if not initialized
       return this.create({
-        enabled: process.env.NODE_ENV === 'development',
+        enabled: process.env.NODE_ENV
+          ? process.env.NODE_ENV === 'development'
+          : true,
         level: 'info',
       });
     }
