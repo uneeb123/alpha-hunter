@@ -1,7 +1,6 @@
-/*
 import { Debugger } from '@/utils/debugger';
 import { NextResponse } from 'next/server';
-import { ScraperManager } from '@/workflow/scrapper/scraper_manager';
+// import { ScraperManager } from '@/workflow/scrapper/scraper_manager';
 import { getSecrets } from '@/utils/secrets';
 // import { PrismaClient } from '@prisma/client';
 
@@ -18,47 +17,47 @@ export const maxDuration = 300;
 export async function GET() {
   try {
     const secrets = getSecrets();
-    const scraperManager = new ScraperManager(
-      secrets.twitterApiKey,
-      secrets.twitterApiSecret,
-      secrets.twitterAccessToken,
-      secrets.twitterAccessSecret,
-    );
+    // const scraperManager = new ScraperManager(
+    //   secrets.twitterApiKey,
+    //   secrets.twitterApiSecret,
+    //   secrets.twitterAccessToken,
+    //   secrets.twitterAccessSecret,
+    // );
 
     // Check for stale running scrapers (>5 minutes old)
-    const prisma = new PrismaClient();
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    // const prisma = new PrismaClient();
+    // const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const staleScraper = await prisma.scraper.findFirst({
-      where: {
-        status: 'RUNNING',
-        startTime: {
-          lt: fiveMinutesAgo,
-        },
-      },
-      orderBy: {
-        startTime: 'desc',
-      },
-    });
+    // const staleScraper = await prisma.scraper.findFirst({
+    //   where: {
+    //     status: 'RUNNING',
+    //     startTime: {
+    //       lt: fiveMinutesAgo,
+    //     },
+    //   },
+    //   orderBy: {
+    //     startTime: 'desc',
+    //   },
+    // });
 
-    if (staleScraper) {
-      // First delete related records in ScraperToUser
-      await prisma.scraperToUser.deleteMany({
-        where: {
-          scraperId: staleScraper.id,
-        },
-      });
+    // if (staleScraper) {
+    //   // First delete related records in ScraperToUser
+    //   await prisma.scraperToUser.deleteMany({
+    //     where: {
+    //       scraperId: staleScraper.id,
+    //     },
+    //   });
 
-      // Then delete the scraper
-      await prisma.scraper.delete({
-        where: {
-          id: staleScraper.id,
-        },
-      });
-      debug.info(`Deleted stale scraper with ID: ${staleScraper.id}`);
-    }
+    //   // Then delete the scraper
+    //   await prisma.scraper.delete({
+    //     where: {
+    //       id: staleScraper.id,
+    //     },
+    //   });
+    //   debug.info(`Deleted stale scraper with ID: ${staleScraper.id}`);
+    // }
 
-    await scraperManager.initScraping();
+    // await scraperManager.initScraping();
     return NextResponse.json({ success: true });
   } catch (error) {
     debug.error('Error during scraping:', error as Error);
@@ -68,4 +67,3 @@ export async function GET() {
     );
   }
 }
-*/
