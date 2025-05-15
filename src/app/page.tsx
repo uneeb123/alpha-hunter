@@ -85,19 +85,12 @@ function filterUsers(users: User[], filters: Filter[]) {
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: Record<string, string> | Promise<Record<string, string>>;
+  searchParams?: { [key: string]: string };
 }) {
-  // Await searchParams if it's a Promise
-  const resolvedSearchParams: Record<string, string> =
-    searchParams && typeof (searchParams as any).then === 'function'
-      ? await searchParams
-      : ((searchParams as Record<string, string>) ?? {});
-
   const sortKey =
-    (resolvedSearchParams?.sortKey as keyof User) || 'smartFollowingCount';
-  const direction =
-    (resolvedSearchParams?.direction as 'asc' | 'desc') || 'desc';
-  const filters = parseFilters(resolvedSearchParams);
+    (searchParams?.sortKey as keyof User) || 'smartFollowingCount';
+  const direction = (searchParams?.direction as 'asc' | 'desc') || 'desc';
+  const filters = parseFilters(searchParams);
 
   const users = await prisma.user.findMany();
   const filteredUsers = filterUsers(users, filters);
@@ -105,7 +98,7 @@ export default async function Home({
 
   // Sanitize searchParams to a plain object of strings
   const safeSearchParams = Object.fromEntries(
-    Object.entries(resolvedSearchParams).filter(
+    Object.entries(searchParams ?? {}).filter(
       ([k, v]) => typeof k === 'string' && typeof v === 'string',
     ),
   );
