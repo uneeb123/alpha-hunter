@@ -9,8 +9,8 @@ datasource db {
 }
 
 model User {
-  id                      Int      @id @default(autoincrement())
-  twitterId               String   @unique
+  id                      Int     @id @default(autoincrement())
+  twitterId               String  @unique
   name                    String
   username                String
   description             String?
@@ -24,8 +24,25 @@ model User {
   smartFollowingCount     Int?
   averageEngagement       Float?
   followerEngagementRatio Float?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  sinceId                 String?
+  tweets                  Tweet[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tweet {
+  id        String   @id
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  text      String   @db.Text
+  s3Key     String
+  timestamp DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // QUANTITATIVE
@@ -89,31 +106,4 @@ model CheckedToken {
   updatedAt    DateTime @updatedAt
 
   @@index([tokenAddress])
-}
-
-// REVISED QUALITATIVE
-
-model Tweet {
-  id        String   @id // Twitter's tweet ID
-  text      String   @db.Text
-  authorId  String // Twitter user ID
-  vectorId  String? // Pinecone vector ID
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([authorId])
-  @@index([createdAt])
-}
-
-model UserTimeline {
-  id             Int       @id @default(autoincrement())
-  twitterId      String    @unique // Twitter user ID
-  lastTweetId    String? // Last processed tweet ID
-  lastSynced     DateTime?
-  nextRun        DateTime?
-  rateLimitReset DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@index([nextRun])
 }

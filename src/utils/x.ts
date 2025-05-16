@@ -1,7 +1,6 @@
-/*
 import { getSecrets } from '@/utils/secrets';
 import { TwitterApi, TweetSearchRecentV2Paginator } from 'twitter-api-v2';
-import { PrismaClient } from '@prisma/client';
+// import { PrismaClient } from '@prisma/client';
 import { Debugger } from '@/utils/debugger';
 
 export async function search(
@@ -56,6 +55,7 @@ export async function search(
   }
 }
 
+/*
 // 100 requests / 24 hours
 export async function getUsernameById(userId: string): Promise<string> {
   const prisma = new PrismaClient();
