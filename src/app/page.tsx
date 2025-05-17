@@ -105,22 +105,45 @@ export default async function Home({ searchParams }: { searchParams?: any }) {
   );
 
   return (
-    <div style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>
-      <h1 style={{ fontSize: 24, marginBottom: 24 }}>User Metrics</h1>
-      <FilterForm
-        metricColumns={metricColumns}
-        filters={filters.map((f) => ({ key: String(f.key), value: f.value }))}
-        sortKey={String(sortKey)}
-        direction={String(direction)}
-      />
-      <UserTable
-        users={sortedUsers}
-        sortKey={String(sortKey)}
-        direction={String(direction)}
-        filterKey={undefined}
-        filterValue={undefined}
-        searchParams={safeSearchParams}
-      />
-    </div>
+    <>
+      <nav
+        style={{
+          padding: '16px 24px',
+          backgroundColor: '#f5f5f5',
+          borderBottom: '1px solid #eaeaea',
+        }}
+      >
+        <div
+          style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 24 }}
+        >
+          <a href="/" style={{ textDecoration: 'none', color: '#0070f3' }}>
+            User Metrics
+          </a>
+          <a
+            href="/bot-controls"
+            style={{ textDecoration: 'none', color: '#0070f3' }}
+          >
+            Bot Controls
+          </a>
+        </div>
+      </nav>
+      <div style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>
+        <h1 style={{ fontSize: 24, marginBottom: 24 }}>User Metrics</h1>
+        <FilterForm
+          metricColumns={metricColumns}
+          filters={filters.map((f) => ({ key: String(f.key), value: f.value }))}
+          sortKey={String(sortKey)}
+          direction={String(direction)}
+        />
+        <UserTable
+          users={sortedUsers}
+          sortKey={String(sortKey)}
+          direction={String(direction)}
+          filterKey={undefined}
+          filterValue={undefined}
+          searchParams={safeSearchParams}
+        />
+      </div>
+    </>
   );
 }

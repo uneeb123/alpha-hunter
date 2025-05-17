@@ -57,7 +57,9 @@ export class NotiBotClient {
 
       try {
         const news = await getCryptoNews();
-        await ctx.reply(news);
+        await ctx.reply(`${news}`, {
+          parse_mode: 'Markdown',
+        });
       } catch (error) {
         this.debug.error('Error fetching crypto news:', error as Error);
         await ctx.reply(
@@ -72,7 +74,9 @@ export class NotiBotClient {
 
       try {
         const news = await getEmergingMemecoins();
-        await ctx.reply(news);
+        await ctx.reply(`${news}`, {
+          parse_mode: 'Markdown',
+        });
       } catch (error) {
         this.debug.error('Error fetching memecoin news:', error as Error);
         await ctx.reply(
@@ -87,7 +91,9 @@ export class NotiBotClient {
 
       try {
         const mints = await getRecentNFTMints();
-        await ctx.reply(mints);
+        await ctx.reply(`${mints}`, {
+          parse_mode: 'Markdown',
+        });
       } catch (error) {
         this.debug.error('Error fetching NFT mints:', error as Error);
         await ctx.reply(
