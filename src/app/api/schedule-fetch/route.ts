@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { Client } from '@upstash/qstash';
 import { getSecrets } from '@/utils/secrets';
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const secrets = getSecrets();
   const qstash = new Client({ token: secrets.qstashToken });
   const redis = new Redis({
