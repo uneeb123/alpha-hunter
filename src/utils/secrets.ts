@@ -28,6 +28,7 @@ export interface Secrets {
   qstashToken: string;
   upstashRedisUrl: string;
   upstashRedisToken: string;
+  grokApiKey: string;
 }
 
 class SecretsManager {
@@ -62,6 +63,7 @@ class SecretsManager {
       QSTASH_TOKEN,
       UPSTASH_REDIS_URL,
       UPSTASH_REDIS_TOKEN,
+      GROK_API_KEY,
     } = process.env;
 
     // Validate all required secrets are present
@@ -91,6 +93,7 @@ class SecretsManager {
       ['QSTASH_TOKEN', QSTASH_TOKEN],
       ['UPSTASH_REDIS_URL', UPSTASH_REDIS_URL],
       ['UPSTASH_REDIS_TOKEN', UPSTASH_REDIS_TOKEN],
+      ['GROK_API_KEY', GROK_API_KEY],
       // OPENAI_API_KEY is optional, used for vector embeddings
     ].filter(([, value]) => !value);
 
@@ -129,6 +132,7 @@ class SecretsManager {
       qstashToken: QSTASH_TOKEN!,
       upstashRedisUrl: UPSTASH_REDIS_URL!,
       upstashRedisToken: UPSTASH_REDIS_TOKEN!,
+      grokApiKey: GROK_API_KEY!,
     };
   }
 
