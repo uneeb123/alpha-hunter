@@ -1,3 +1,8 @@
 {
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/embed-tweets",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

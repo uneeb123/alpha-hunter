@@ -39,6 +39,9 @@ model Tweet {
   s3Key     String
   timestamp DateTime
 
+  embeddedAt DateTime? // null ⇒ still needs embedding
+  pineId     String?   @unique // optional—stores vector-id in Pinecone
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -59,6 +59,7 @@
     "memory": "link:@langchain/vectorstores/memory",
     "next": "15.1.7",
     "openai": "^4.91.1",
+    "p-limit": "^6.2.0",
     "prisma": "^6.4.0",
     "puppeteer": "^24.4.0",
     "react": "^19.0.0",
