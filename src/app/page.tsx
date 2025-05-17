@@ -3,6 +3,7 @@ import { User } from '@prisma/client';
 import React from 'react';
 import UserTable from '@/components/UserTable';
 import FilterForm from '@/components/FilterForm';
+import Link from 'next/link';
 
 // Add this export to prevent caching
 export const dynamic = 'force-dynamic';
@@ -116,15 +117,15 @@ export default async function Home({ searchParams }: { searchParams?: any }) {
         <div
           style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 24 }}
         >
-          <a href="/" style={{ textDecoration: 'none', color: '#0070f3' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: '#0070f3' }}>
             User Metrics
-          </a>
-          <a
+          </Link>
+          <Link
             href="/bot-controls"
             style={{ textDecoration: 'none', color: '#0070f3' }}
           >
             Bot Controls
-          </a>
+          </Link>
         </div>
       </nav>
       <div style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>

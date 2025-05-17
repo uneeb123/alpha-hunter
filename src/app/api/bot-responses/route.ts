@@ -13,7 +13,7 @@ export async function GET() {
     );
 
     return NextResponse.json(responseMap);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch responses' },
       { status: 500 },
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to save responses' },
       { status: 500 },
