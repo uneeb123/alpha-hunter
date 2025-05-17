@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     await prisma.$executeRawUnsafe(
       `UPDATE "Tweet" SET "s3Key"=$1 WHERE "userId"=$2 AND "s3Key"=''`,
       s3Key,
-      userId,
+      user.id,
     );
   }
 
