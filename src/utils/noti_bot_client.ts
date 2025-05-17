@@ -27,12 +27,14 @@ export class NotiBotClient {
               'Trending Crypto News 📈',
               'trending_crypto_news',
             ),
+          ],
+          [
             Markup.button.callback(
               'Emerging Memecoins 🐸',
               'emerging_memecoins',
             ),
-            Markup.button.callback('Recent NFT Mints 🖼️', 'recent_nft_mints'),
           ],
+          [Markup.button.callback('Recent NFT Mints 🖼️', 'recent_nft_mints')],
         ]),
       );
     });
