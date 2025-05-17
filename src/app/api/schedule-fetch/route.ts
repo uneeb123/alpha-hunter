@@ -20,7 +20,7 @@ export async function GET() {
 
   // ➋ Publish a job to QStash
   await qstash.publishJSON({
-    url: '/api/fetch-tweets', // absolute if not same domain
+    url: `${secrets.productionUrl}/api/fetch-tweets`,
     body: { userId }, // { "userId": "123" }
     // QStash will retry (exp back-off) on any non-2xx
   });
