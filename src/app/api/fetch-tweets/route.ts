@@ -19,7 +19,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'no userId' }, { status: 400 });
 
   // ➊ pull since-id (optional)
-  const user = await prisma.user.findUnique({ where: { twitterId: userId } });
+  const user = await prisma.user.findUnique({
+    where: { twitterId: String(userId) },
+  });
   if (!user) return NextResponse.json({ error: 'no user' }, { status: 400 });
 
   // ➋ Direct X API call using axios
