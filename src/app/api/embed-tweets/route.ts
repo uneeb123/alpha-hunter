@@ -30,7 +30,7 @@ interface TweetWithUser {
 export async function GET() {
   try {
     const tweets = await prisma.tweet.findMany({
-      where: { embeddedAt: null },
+      where: { pineId: null },
       include: { user: { select: { username: true } } },
       orderBy: { timestamp: 'asc' },
       take: BATCH_SIZE,
@@ -76,11 +76,19 @@ export async function GET() {
               })),
             );
 
-            // 3. Mark as embedded in database
+            // 3. Mark as embedded in database and set pineId
             await prisma.tweet.updateMany({
               where: { id: { in: batch.map((b: TweetWithUser) => b.id) } },
               data: { embeddedAt: new Date() },
             });
+            await Promise.all(
+              batch.map((tweet) =>
+                prisma.tweet.update({
+                  where: { id: tweet.id },
+                  data: { pineId: tweet.id },
+                }),
+              ),
+            );
           } catch (error) {
             console.error('Error processing batch:', error);
             throw error;
