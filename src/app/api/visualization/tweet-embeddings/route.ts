@@ -8,7 +8,7 @@ const pinecone = new Pinecone({ apiKey: secrets.pineconeApiKey }).Index(
 );
 
 // Supports ?numBatches=3 (default 1, max 10). Each batch is 100 vectors.
-export async function GET(req: Request) {
+export async function GET() {
   try {
     // 1. Fetch 100 tweets with pineId not null
     const tweets = await prisma.tweet.findMany({
