@@ -11,7 +11,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LabelList,
 } from 'recharts';
 
 const VisualizationTab = () => {
@@ -52,7 +51,7 @@ const VisualizationTab = () => {
           timestamp: vectors[i].timestamp,
         }));
         setData(chartData);
-      } catch (err: any) {
+      } catch {
         setError('Failed to load visualization data');
       } finally {
         setLoading(false);

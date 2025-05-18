@@ -2,43 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { User } from '@prisma/client';
 import ClientHome from '@/components/ClientHome';
 
-// Add this at the top for stopword type
-// @ts-ignore
-// eslint-disable-next-line
-declare module 'stopword';
-
 // Add this export to prevent caching
 export const dynamic = 'force-dynamic';
-
-const columns = [
-  { key: 'index', label: '#' },
-  { key: 'name', label: 'Name' },
-  { key: 'username', label: 'Username' },
-  { key: 'followersCount', label: 'Followers' },
-  { key: 'followingCount', label: 'Following' },
-  { key: 'tweetCount', label: 'Tweets' },
-  { key: 'listedCount', label: 'Listed' },
-  { key: 'likeCount', label: 'Likes' },
-  { key: 'mediaCount', label: 'Media' },
-  { key: 'smartFollowingCount', label: 'Smart Following' },
-  { key: 'averageEngagement', label: 'Avg Engagement' },
-  { key: 'followerEngagementRatio', label: 'Follower Engagement Ratio' },
-  { key: 'delete', label: 'Delete' },
-];
-
-const metricColumns = columns.filter((col) =>
-  [
-    'followersCount',
-    'followingCount',
-    'tweetCount',
-    'listedCount',
-    'likeCount',
-    'mediaCount',
-    'smartFollowingCount',
-    'averageEngagement',
-    'followerEngagementRatio',
-  ].includes(col.key),
-);
 
 type Filter = { key: keyof User; value: number };
 
