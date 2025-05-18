@@ -14,8 +14,9 @@ curl -X POST https://e664-2601-646-300-5e0-b974-eee8-c8c9-d14c.ngrok-free.app/ap
 
 Make sure to replace PRODUCTION_URL in Environment Variables
 
-curl -X POST https://2f78-162-217-74-116.ngrok-free.app/api/telegram/noti-bot/set-webhook
-curl -X POST https://2f78-162-217-74-116.ngrok-free.app/api/telegram/noti-bot/delete-webhook
+curl -X POST https://admin.singularitylabs.co/api/telegram/noti-bot/delete-webhook
+curl -X POST https://0b83-162-217-74-116.ngrok-free.app/api/telegram/noti-bot/set-webhook
+curl -X POST https://0b83-162-217-74-116.ngrok-free.app/api/telegram/noti-bot/delete-webhook
 
 # Scripts
 

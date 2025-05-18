@@ -6,6 +6,7 @@ import UserTable from '@/components/UserTable';
 import FilterForm from '@/components/FilterForm';
 import Link from 'next/link';
 import { User } from '@prisma/client';
+import AskTab from '@/components/AskTab';
 
 const metricColumns = [
   { key: 'index', label: '#' },
@@ -38,7 +39,9 @@ export default function ClientHome({
   direction,
   safeSearchParams,
 }: ClientHomeProps) {
-  const [tab, setTab] = useState<'metrics' | 'visualization'>('metrics');
+  const [tab, setTab] = useState<'metrics' | 'visualization' | 'ask'>(
+    'metrics',
+  );
 
   // Filtering and sorting logic can be moved here if needed, or passed from server
 
@@ -79,6 +82,19 @@ export default function ClientHome({
             }}
           >
             Visualization
+          </button>
+          <button
+            onClick={() => setTab('ask')}
+            style={{
+              textDecoration: tab === 'ask' ? 'underline' : 'none',
+              color: '#0070f3',
+              background: 'none',
+              border: 'none',
+              fontSize: 16,
+              cursor: 'pointer',
+            }}
+          >
+            Ask
           </button>
           <Link
             href="/bot-controls"
@@ -121,6 +137,7 @@ export default function ClientHome({
           </>
         )}
         {tab === 'visualization' && <VisualizationTab />}
+        {tab === 'ask' && <AskTab />}
       </div>
     </>
   );
