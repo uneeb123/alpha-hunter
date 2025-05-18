@@ -32,7 +32,7 @@ const VisualizationTab = () => {
         }
         // 1. UMAP to 2D
         const umap = new UMAP({ nComponents: 2, nNeighbors: 15, minDist: 0.1 });
-        const coords = umap.fit(vectors.map((v: any) => v.values));
+        const coords = umap.fit(vectors.map((v: any) => v.embedding));
         // 2. KMeans clustering (choose k by sqrt(N/2), min 2, max 10)
         const k = Math.max(
           2,
@@ -47,7 +47,7 @@ const VisualizationTab = () => {
           y,
           cluster: clusterLabels[i],
           text: vectors[i].text,
-          username: vectors[i].metadata?.username,
+          username: vectors[i].username,
           timestamp: vectors[i].timestamp,
         }));
         setData(chartData);
