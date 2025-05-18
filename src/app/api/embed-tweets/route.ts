@@ -14,7 +14,7 @@ const BATCH_SIZE = 100; // rows per OpenAI request
 const MAX_PARALLEL = 5; // concurrent batches
 const limit = pLimit(MAX_PARALLEL);
 
-export const runtime = 'edge'; // optional: fast cold-start
+// export const runtime = 'edge';
 
 interface TweetWithUser {
   id: string;
