@@ -1,4 +1,3 @@
-// src/app/api/embed-tweets/route.ts  (App Router)
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
