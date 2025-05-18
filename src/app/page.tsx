@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { User } from '@prisma/client';
-import React from 'react';
-import UserTable from '@/components/UserTable';
-import FilterForm from '@/components/FilterForm';
-import Link from 'next/link';
+import ClientHome from '@/components/ClientHome';
+
+// Add this at the top for stopword type
+// @ts-ignore
+// eslint-disable-next-line
+declare module 'stopword';
 
 // Add this export to prevent caching
 export const dynamic = 'force-dynamic';
@@ -105,46 +107,14 @@ export default async function Home({ searchParams }: { searchParams?: any }) {
     ),
   );
 
+  // Pass all required props to ClientHome
   return (
-    <>
-      <nav
-        style={{
-          padding: '16px 24px',
-          backgroundColor: '#f5f5f5',
-          borderBottom: '1px solid #eaeaea',
-        }}
-      >
-        <div
-          style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 24 }}
-        >
-          <Link href="/" style={{ textDecoration: 'none', color: '#0070f3' }}>
-            User Metrics
-          </Link>
-          <Link
-            href="/bot-controls"
-            style={{ textDecoration: 'none', color: '#0070f3' }}
-          >
-            Bot Controls
-          </Link>
-        </div>
-      </nav>
-      <div style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>
-        <h1 style={{ fontSize: 24, marginBottom: 24 }}>User Metrics</h1>
-        <FilterForm
-          metricColumns={metricColumns}
-          filters={filters.map((f) => ({ key: String(f.key), value: f.value }))}
-          sortKey={String(sortKey)}
-          direction={String(direction)}
-        />
-        <UserTable
-          users={sortedUsers}
-          sortKey={String(sortKey)}
-          direction={String(direction)}
-          filterKey={undefined}
-          filterValue={undefined}
-          searchParams={safeSearchParams}
-        />
-      </div>
-    </>
+    <ClientHome
+      users={sortedUsers}
+      filters={filters.map((f) => ({ key: String(f.key), value: f.value }))}
+      sortKey={String(sortKey)}
+      direction={String(direction)}
+      safeSearchParams={safeSearchParams}
+    />
   );
 }
