@@ -1,3 +1,7 @@
+# Running clustering
+
+curl -X POST http://localhost:3000/api/visualization/tweet-embeddings/compute
+
 # Running Telegram Message Handler Locally
 
 curl -X POST https://admin.singularitylabs.co/api/telegram/delete-webhook

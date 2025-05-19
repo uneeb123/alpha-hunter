@@ -120,3 +120,21 @@ model BotResponse {
 
   @@index([name])
 }
+
+model TweetEmbeddingCluster {
+  id                           Int      @id @default(autoincrement())
+  cluster                      Int
+  centroidX                    Float
+  centroidY                    Float
+  radius                       Float
+  count                        Int
+  topic                        String
+  summary                      String?
+  highlightText                String
+  highlightUsername            String
+  highlightTimestamp           DateTime
+  highlightSmartFollowingCount Int?
+  computedAt                   DateTime @default(now())
+
+  @@index([computedAt])
+}

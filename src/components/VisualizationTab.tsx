@@ -85,16 +85,67 @@ const VisualizationTab = () => {
                   background: '#fff',
                   border: '1px solid #ccc',
                   padding: 10,
+                  maxWidth: 300,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
               >
-                <div>
-                  <b>Cluster:</b> {d.cluster}
+                <div style={{ marginBottom: 8 }}>
+                  <b>Topic:</b> {d.topic}
                 </div>
-                <div>
-                  <b>Points:</b> {d.count}
+                {d.summary && (
+                  <div style={{ marginBottom: 8 }}>
+                    <b>Summary:</b>
+                    {Array.isArray(d.summary) ? (
+                      <ul style={{ margin: 0, paddingLeft: 18 }}>
+                        {d.summary.map((s: string, idx: number) => (
+                          <li key={idx}>{s}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      // If summary is a string, check for bullet points
+                      (() => {
+                        // Split by newlines and filter out empty lines
+                        const lines = d.summary
+                          .split(/\r?\n/)
+                          .map((l: string) => l.trim())
+                          .filter(Boolean);
+                        const isBulleted =
+                          lines.length > 1 &&
+                          lines.every(
+                            (l: string) =>
+                              l.startsWith('-') || l.startsWith('•'),
+                          );
+                        if (isBulleted) {
+                          return (
+                            <ul style={{ margin: 0, paddingLeft: 18 }}>
+                              {lines.map((line: string, idx: number) => (
+                                <li key={idx}>
+                                  {line.replace(/^[-•]\s*/, '')}
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        } else {
+                          return <div>{d.summary}</div>;
+                        }
+                      })()
+                    )}
+                  </div>
+                )}
+                <div style={{ marginBottom: 8 }}>
+                  <b>Cluster Size:</b> {d.count} tweets
                 </div>
-                <div>
-                  <b>Radius:</b> {d.radius.toFixed(2)}
+                <div style={{ borderTop: '1px solid #eee', paddingTop: 8 }}>
+                  <div style={{ marginBottom: 4 }}>
+                    <b>Highlight Tweet:</b>
+                  </div>
+                  <div style={{ marginBottom: 4 }}>
+                    <i>@{d.highlight.username}</i>
+                  </div>
+                  <div style={{ marginBottom: 4 }}>{d.highlight.text}</div>
+                  <div style={{ fontSize: '0.8em', color: '#666' }}>
+                    Smart Following: {d.highlight.smartFollowingCount}
+                  </div>
                 </div>
               </div>
             );
@@ -103,13 +154,16 @@ const VisualizationTab = () => {
         {data.map((cluster, i) => (
           <Scatter
             key={i}
-            name={`Cluster ${i}`}
+            name={`${cluster.topic}`}
             data={[
               {
                 centroid: cluster.centroid,
                 radius: cluster.radius,
                 cluster: cluster.cluster,
                 count: cluster.count,
+                topic: cluster.topic,
+                highlight: cluster.highlight,
+                summary: cluster.summary,
               },
             ]}
             fill={colors[i % colors.length]}
