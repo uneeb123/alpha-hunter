@@ -19,37 +19,16 @@ const VisualizationTab = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchAndProcess() {
+    async function fetchData() {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch('/api/visualization/tweet-embeddings');
-        const vectors = await res.json();
-        if (!Array.isArray(vectors) || vectors.length === 0) {
+        const chartData = await res.json();
+        if (!Array.isArray(chartData) || chartData.length === 0) {
           setData([]);
-          setLoading(false);
           return;
         }
-        // 1. UMAP to 2D
-        const umap = new UMAP({ nComponents: 2, nNeighbors: 15, minDist: 0.1 });
-        const coords = umap.fit(vectors.map((v: any) => v.embedding));
-        // 2. KMeans clustering (choose k by sqrt(N/2), min 2, max 10)
-        const k = Math.max(
-          2,
-          Math.min(10, Math.round(Math.sqrt(vectors.length / 2))),
-        );
-        const kmeansResult = kmeans(coords, k, {});
-        // 3. Assign cluster numbers
-        const clusterLabels = kmeansResult.clusters;
-        // 4. Prepare data for recharts (no label/keyword)
-        const chartData = coords.map(([x, y]: number[], i: number) => ({
-          x,
-          y,
-          cluster: clusterLabels[i],
-          text: vectors[i].text,
-          username: vectors[i].username,
-          timestamp: vectors[i].timestamp,
-        }));
         setData(chartData);
       } catch {
         setError('Failed to load visualization data');
@@ -57,7 +36,7 @@ const VisualizationTab = () => {
         setLoading(false);
       }
     }
-    fetchAndProcess();
+    fetchData();
   }, []);
 
   if (loading) return <div>Loading visualization...</div>;
