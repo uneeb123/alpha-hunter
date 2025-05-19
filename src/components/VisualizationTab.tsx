@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UMAP } from 'umap-js';
-import { kmeans } from 'ml-kmeans';
 import {
   ScatterChart,
   Scatter,
@@ -12,6 +10,20 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+
+// Add custom shape component
+const CustomShape = (props: any) => {
+  const { cx, cy, payload } = props;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={payload.radius * 50} // Scale the radius for better visualization
+      fill={props.fill}
+      fillOpacity={0.2}
+    />
+  );
+};
 
 const VisualizationTab = () => {
   const [data, setData] = useState<any[]>([]);
@@ -57,14 +69,11 @@ const VisualizationTab = () => {
     '#FF6699',
   ];
 
-  // Find number of clusters
-  const numClusters = Math.max(...data.map((d) => d.cluster)) + 1;
-
   return (
     <ResponsiveContainer width="100%" height={600}>
       <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
-        <XAxis type="number" dataKey="x" name="UMAP-1" />
-        <YAxis type="number" dataKey="y" name="UMAP-2" />
+        <XAxis type="number" dataKey="centroid.x" name="UMAP-1" />
+        <YAxis type="number" dataKey="centroid.y" name="UMAP-2" />
         <Tooltip
           cursor={{ strokeDasharray: '3 3' }}
           content={({ active, payload }) => {
@@ -82,33 +91,29 @@ const VisualizationTab = () => {
                   <b>Cluster:</b> {d.cluster}
                 </div>
                 <div>
-                  <b>User:</b> {d.username}
+                  <b>Points:</b> {d.count}
                 </div>
                 <div>
-                  <b>Text:</b>{' '}
-                  {typeof d.text === 'string' ? (
-                    <>
-                      {d.text.slice(0, 120)}
-                      {d.text.length > 120 ? '...' : ''}
-                    </>
-                  ) : (
-                    <i>No text</i>
-                  )}
-                </div>
-                <div>
-                  <b>Timestamp:</b>{' '}
-                  {d.timestamp ? new Date(d.timestamp).toLocaleString() : ''}
+                  <b>Radius:</b> {d.radius.toFixed(2)}
                 </div>
               </div>
             );
           }}
         />
-        {[...Array(numClusters)].map((_, i) => (
+        {data.map((cluster, i) => (
           <Scatter
             key={i}
             name={`Cluster ${i}`}
-            data={data.filter((d) => d.cluster === i)}
+            data={[
+              {
+                centroid: cluster.centroid,
+                radius: cluster.radius,
+                cluster: cluster.cluster,
+                count: cluster.count,
+              },
+            ]}
             fill={colors[i % colors.length]}
+            shape={CustomShape}
           />
         ))}
         <Legend />

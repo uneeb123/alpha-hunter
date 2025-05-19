@@ -52,17 +52,40 @@ export async function GET() {
     );
     const kmeansResult = kmeans(coords, k, {});
 
-    // 3. Combine all data
-    const result = coords.map(([x, y], i) => ({
-      x,
-      y,
-      cluster: kmeansResult.clusters[i],
-      text: vectors[i].text,
-      username: vectors[i].username,
-      timestamp: vectors[i].timestamp,
-    }));
+    // Compute centroids and radii for each cluster
+    const clusterData = Array.from({ length: k }, (_, i) => {
+      const clusterPoints = coords.filter(
+        (_, idx) => kmeansResult.clusters[idx] === i,
+      );
 
-    return Response.json(result);
+      // Calculate centroid (mean of all points in cluster)
+      const centroid = {
+        x:
+          clusterPoints.reduce((sum, p) => sum + p[0], 0) /
+          clusterPoints.length,
+        y:
+          clusterPoints.reduce((sum, p) => sum + p[1], 0) /
+          clusterPoints.length,
+      };
+
+      // Calculate radius (max distance from centroid to any point in cluster)
+      const radius = Math.max(
+        ...clusterPoints.map((p) =>
+          Math.sqrt(
+            Math.pow(p[0] - centroid.x, 2) + Math.pow(p[1] - centroid.y, 2),
+          ),
+        ),
+      );
+
+      return {
+        cluster: i,
+        centroid,
+        radius,
+        count: clusterPoints.length,
+      };
+    });
+
+    return Response.json(clusterData);
   } catch (error) {
     console.error('Error processing tweet embeddings:', error);
     return new Response('Error processing tweet embeddings', { status: 500 });
