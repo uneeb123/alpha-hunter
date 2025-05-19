@@ -21,11 +21,28 @@ export default function AskTab() {
       const res = await axios.post('/api/ask', {
         message: userMessage.content,
       });
+      const data = res.data.response;
+      // If response is an array of tweets, format as a string for display
+      let assistantContent: string;
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          assistantContent = 'No relevant tweets found.';
+        } else {
+          assistantContent = data
+            .map(
+              (tweet) =>
+                `@${tweet.username} (${new Date(tweet.timestamp).toLocaleString()}):\n${tweet.text}\n`,
+            )
+            .join('\n');
+        }
+      } else {
+        assistantContent = data;
+      }
       setMessages((msgs) => [
         ...msgs,
-        { role: 'assistant', content: res.data.response },
+        { role: 'assistant', content: assistantContent },
       ]);
-    } catch (err) {
+    } catch {
       setMessages((msgs) => [
         ...msgs,
         { role: 'assistant', content: 'Error: Failed to get response.' },
@@ -70,6 +87,7 @@ export default function AskTab() {
                 padding: '8px 14px',
                 maxWidth: '80%',
                 wordBreak: 'break-word',
+                whiteSpace: 'pre-line',
               }}
             >
               {msg.content}
