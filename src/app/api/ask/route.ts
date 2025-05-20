@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Query Pinecone for top 5 most similar tweets
+    // 2. Query Pinecone for top 10 most similar tweets
     const queryResult = await pinecone.query({
       vector: embedding,
       topK: 10,
@@ -52,19 +52,53 @@ export async function POST(request: Request) {
       include: { user: { select: { username: true } } },
     });
 
-    // 4. Format and return results in the same order as Pinecone
+    // 4. Format tweets for context
     const tweetMap = new Map(tweets.map((t) => [t.id, t]));
-    const response = tweetIds
+    const relevantTweets = tweetIds
       .map((id) => tweetMap.get(id))
       .filter((t): t is (typeof tweets)[number] => Boolean(t))
       .map((t) => ({
-        id: t.id,
         text: t.text,
         username: t.user.username,
         timestamp: t.timestamp,
       }));
 
-    return NextResponse.json({ response });
+    // 5. Format context from relevant tweets
+    const context = relevantTweets
+      .map(
+        (t) =>
+          `Tweet by @${t.username} (${new Date(t.timestamp).toLocaleDateString()}): ${t.text}`,
+      )
+      .join('\n\n');
+
+    // 6. Generate response using RAG
+    const ragResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a helpful assistant that specializes in cryptocurrency and blockchain technology. 
+          Use the provided context from relevant tweets to answer questions accurately and concisely.
+          If the context doesn't contain enough information to answer the question, say so.
+          Always cite the sources (usernames) when referencing specific information from tweets.`,
+        },
+        {
+          role: 'user',
+          content: `Context from relevant tweets:\n\n${context}\n\nQuestion: ${message}`,
+        },
+      ],
+      temperature: 0,
+      max_tokens: 500,
+    });
+
+    return NextResponse.json({
+      response: ragResponse.choices[0].message.content,
+      sources: relevantTweets.map((t) => ({
+        username: t.username,
+        text: t.text,
+        timestamp: t.timestamp,
+      })),
+    });
   } catch (err: any) {
     console.error('Error in /api/ask:', err);
     return NextResponse.json(
