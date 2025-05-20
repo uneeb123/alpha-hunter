@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         new PutObjectCommand({
           Bucket: secrets.awsBucketName,
           Key: s3Key,
-          Body: JSON.stringify(tweets, null, 2),
+          Body: JSON.stringify(timeline.data, null, 2),
           ContentType: 'application/json',
         }),
       );
