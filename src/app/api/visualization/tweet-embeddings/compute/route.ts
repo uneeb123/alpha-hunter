@@ -2,8 +2,8 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { getSecrets } from '@/utils/secrets';
 import { prisma } from '@/lib/prisma';
 import { UMAP } from 'umap-js';
-import { kmeans } from 'ml-kmeans';
 import OpenAI from 'openai';
+import { HDBSCAN } from 'hdbscan-ts';
 
 const secrets = getSecrets();
 const pinecone = new Pinecone({ apiKey: secrets.pineconeApiKey }).Index(
@@ -14,8 +14,12 @@ const openai = new OpenAI({ apiKey: secrets.openaiApiKey });
 export async function POST() {
   try {
     // 1. Fetch 1000 tweets with pineId not null
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const tweets = await prisma.tweet.findMany({
-      where: { pineId: { not: null } },
+      where: {
+        pineId: { not: null },
+        timestamp: { gte: oneWeekAgo },
+      },
       include: {
         user: {
           select: {
@@ -24,7 +28,7 @@ export async function POST() {
           },
         },
       },
-      take: 1000,
+      // take: 1000,
     });
 
     if (!tweets.length) {
@@ -43,74 +47,94 @@ export async function POST() {
     // Merge all batch results into a single object
     const embeddings = Object.assign({}, ...embeddingsResults);
 
-    // Get embeddings array for processing
+    function normalize(vec: number[]): number[] {
+      const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0)) || 1;
+      return vec.map((v) => v / norm);
+    }
     const vectors = tweets.map((tweet) => ({
       id: tweet.id,
       text: tweet.text,
       username: tweet.user.username,
       timestamp: tweet.timestamp,
-      embedding: embeddings[tweet.pineId!]?.values || [],
+      embedding: normalize(embeddings[tweet.pineId!]?.values || []),
     }));
 
-    // 1. UMAP to 2D
-    const umap = new UMAP({
-      nComponents: 2,
-      nNeighbors: 15,
-      minDist: 0.1,
+    // 1. HDBSCAN clustering on original embeddings
+    const minClusterSize = 3;
+    const hdbscan = new HDBSCAN({ minClusterSize, minSamples: 8 });
+    hdbscan.fit(vectors.map((v) => v.embedding));
+    const labels = hdbscan.labels_;
+
+    // Group indices by cluster label (ignore noise: label === -1)
+    const clustersMap = new Map<number, number[]>();
+    labels.forEach((label: number, idx: number) => {
+      if (label === -1) return; // skip noise
+      if (!clustersMap.has(label)) clustersMap.set(label, []);
+      clustersMap.get(label)!.push(idx);
     });
-    const coords = umap.fit(vectors.map((v) => v.embedding));
+    const filteredClusters = Array.from(clustersMap.values());
 
-    // 2. KMeans clustering
-    const k = Math.max(
-      2,
-      Math.min(10, Math.round(Math.sqrt(vectors.length / 2))),
-    );
-    const kmeansResult = kmeans(coords, k, {});
-
-    // Compute centroids and radii for each cluster
+    // Compute centroids, UMAP, and radii for each cluster
     const now = new Date();
     const clusterRows = await Promise.all(
-      Array.from({ length: k }, async (_, i) => {
-        const clusterPoints = coords.filter(
-          (_, idx) => kmeansResult.clusters[idx] === i,
+      filteredClusters.map(async (cluster: number[], i: number) => {
+        const clusterEmbeddings = cluster.map(
+          (idx: number) => vectors[idx].embedding,
         );
-        const clusterTweets = vectors.filter(
-          (_, idx) => kmeansResult.clusters[idx] === i,
+        const clusterTweets = cluster.map((idx: number) => vectors[idx]);
+        // Run UMAP for this cluster to get 2D coords
+        const nNeighbors = Math.max(
+          2,
+          Math.min(15, clusterEmbeddings.length - 1),
         );
-
-        // Find the tweet from user with highest smartFollowingCount
-        const highlightTweet = clusterTweets.reduce((highest, current) => {
-          const currentUser = tweets.find((t) => t.id === current.id)?.user;
-          const highestUser = tweets.find((t) => t.id === highest.id)?.user;
-          if (
-            !currentUser?.smartFollowingCount ||
-            !highestUser?.smartFollowingCount
-          ) {
-            return highest;
-          }
-          return currentUser.smartFollowingCount >
-            highestUser.smartFollowingCount
-            ? current
-            : highest;
-        }, clusterTweets[0]);
-
-        // Calculate centroid
+        const umap = new UMAP({ nComponents: 2, nNeighbors, minDist: 0.1 });
+        const clusterCoords = umap.fit(clusterEmbeddings);
+        // Calculate centroid in UMAP space
         const centroidX =
-          clusterPoints.reduce((sum, p) => sum + p[0], 0) /
-          clusterPoints.length;
+          clusterCoords.reduce((sum, p) => sum + p[0], 0) /
+          clusterCoords.length;
         const centroidY =
-          clusterPoints.reduce((sum, p) => sum + p[1], 0) /
-          clusterPoints.length;
-        // Calculate radius
+          clusterCoords.reduce((sum, p) => sum + p[1], 0) /
+          clusterCoords.length;
+        // Calculate radius in UMAP space
         const radius = Math.max(
-          ...clusterPoints.map((p) =>
+          ...clusterCoords.map((p) =>
             Math.sqrt(
               Math.pow(p[0] - centroidX, 2) + Math.pow(p[1] - centroidY, 2),
             ),
           ),
         );
-        // Extract topic using OpenAI
-        const tweetTexts = clusterTweets.map((t) => t.text).join('\n');
+        // Find the tweet from user with highest smartFollowingCount
+        const highlightTweet = clusterTweets.reduce(
+          (
+            highest: (typeof clusterTweets)[0],
+            current: (typeof clusterTweets)[0],
+          ) => {
+            const currentUser = tweets.find((t) => t.id === current.id)?.user;
+            const highestUser = tweets.find((t) => t.id === highest.id)?.user;
+            if (
+              !currentUser?.smartFollowingCount ||
+              !highestUser?.smartFollowingCount
+            ) {
+              return highest;
+            }
+            return currentUser.smartFollowingCount >
+              highestUser.smartFollowingCount
+              ? current
+              : highest;
+          },
+          clusterTweets[0],
+        );
+        // Truncate tweetTexts to avoid OpenAI context length error
+        const maxTweets = 30;
+        const maxChars = 4000;
+        let tweetTexts = clusterTweets
+          .slice(0, maxTweets)
+          .map((t) => t.text)
+          .join('\n');
+        if (tweetTexts.length > maxChars) {
+          tweetTexts = tweetTexts.slice(0, maxChars);
+        }
         // Get topic (2-3 words)
         const topicResponse = await openai.chat.completions.create({
           model: 'gpt-3.5-turbo',
@@ -156,7 +180,7 @@ What is the main topic of these tweets?\n
           centroidX,
           centroidY,
           radius,
-          count: clusterPoints.length,
+          count: clusterTweets.length,
           topic: topicResponse.choices[0].message.content?.trim() || '',
           summary: summaryResponse.choices[0].message.content?.trim() || '',
           highlightText: highlightTweet.text,

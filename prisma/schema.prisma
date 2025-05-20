@@ -42,6 +42,12 @@ model Tweet {
   embeddedAt DateTime? // null ⇒ still needs embedding
   pineId     String?   @unique // optional—stores vector-id in Pinecone
 
+  likeCount       Int @default(0)
+  retweetCount    Int @default(0)
+  replyCount      Int @default(0)
+  quoteCount      Int @default(0)
+  impressionCount Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

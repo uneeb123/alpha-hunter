@@ -11,20 +11,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Add custom shape component
-const CustomShape = (props: any) => {
-  const { cx, cy, payload } = props;
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={payload.radius * 50} // Scale the radius for better visualization
-      fill={props.fill}
-      fillOpacity={0.2}
-    />
-  );
-};
-
 const VisualizationTab = () => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +41,30 @@ const VisualizationTab = () => {
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
   if (!data.length) return <div>No data to visualize.</div>;
 
+  // Normalize centroid.x and centroid.y to [0, 1] range
+  const xVals = data.map((c) => c.centroid.x);
+  const yVals = data.map((c) => c.centroid.y);
+  const minX = Math.min(...xVals);
+  const maxX = Math.max(...xVals);
+  const minY = Math.min(...yVals);
+  const maxY = Math.max(...yVals);
+  const norm = (val: number, min: number, max: number) =>
+    max === min ? 0.5 : (val - min) / (max - min);
+  const normalizedData = data.map((cluster) => ({
+    ...cluster,
+    centroid: {
+      x: norm(cluster.centroid.x, minX, maxX),
+      y: norm(cluster.centroid.y, minY, maxY),
+    },
+  }));
+
+  // Normalize radii for display (move here for correct scope)
+  const radii = normalizedData.map((c: any) => c.radius);
+  const minR = Math.min(...radii);
+  const maxR = Math.max(...radii);
+  const normRadius = (r: number) =>
+    maxR === minR ? 0.1 : 0.05 + 0.15 * ((r - minR) / (maxR - minR));
+
   // Pick colors for clusters
   const colors = [
     '#8884d8',
@@ -69,11 +79,46 @@ const VisualizationTab = () => {
     '#FF6699',
   ];
 
+  // Add custom shape component
+  const CustomShape = (props: any) => {
+    const { cx, cy, payload } = props;
+    return (
+      <>
+        <circle
+          cx={cx}
+          cy={cy}
+          r={normRadius(payload.radius) * 600} // 600 is chart height, adjust as needed
+          fill={props.fill}
+          fillOpacity={0.2}
+        />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={6}
+          fill={props.fill}
+          fillOpacity={1}
+          stroke="#333"
+          strokeWidth={1}
+        />
+      </>
+    );
+  };
+
   return (
     <ResponsiveContainer width="100%" height={600}>
       <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
-        <XAxis type="number" dataKey="centroid.x" name="UMAP-1" />
-        <YAxis type="number" dataKey="centroid.y" name="UMAP-2" />
+        <XAxis
+          type="number"
+          dataKey="centroid.x"
+          name="UMAP-1"
+          domain={[-0.1, 1.1]}
+        />
+        <YAxis
+          type="number"
+          dataKey="centroid.y"
+          name="UMAP-2"
+          domain={[-0.1, 1.1]}
+        />
         <Tooltip
           cursor={{ strokeDasharray: '3 3' }}
           content={({ active, payload }) => {
@@ -151,7 +196,7 @@ const VisualizationTab = () => {
             );
           }}
         />
-        {data.map((cluster, i) => (
+        {normalizedData.map((cluster, i) => (
           <Scatter
             key={i}
             name={`${cluster.topic}`}
