@@ -141,6 +141,7 @@ model TweetEmbeddingCluster {
   highlightTimestamp           DateTime
   highlightSmartFollowingCount Int?
   computedAt                   DateTime @default(now())
+  tweetIds                     String[]
 
   @@index([computedAt])
 }

@@ -16,6 +16,20 @@ export async function GET() {
     const clusters = await prisma.tweetEmbeddingCluster.findMany({
       where: { computedAt: latestComputedAt },
       orderBy: { cluster: 'asc' },
+      select: {
+        cluster: true,
+        centroidX: true,
+        centroidY: true,
+        radius: true,
+        count: true,
+        topic: true,
+        summary: true,
+        highlightText: true,
+        highlightUsername: true,
+        highlightTimestamp: true,
+        highlightSmartFollowingCount: true,
+        tweetIds: true,
+      },
     });
     // Map to frontend structure
     const mapped = clusters.map((c) => ({
@@ -31,6 +45,7 @@ export async function GET() {
         timestamp: c.highlightTimestamp,
         smartFollowingCount: c.highlightSmartFollowingCount,
       },
+      tweetIds: c.tweetIds,
     }));
     return Response.json(mapped);
   } catch (error) {

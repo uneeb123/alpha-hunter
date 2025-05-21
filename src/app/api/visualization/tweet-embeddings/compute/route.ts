@@ -13,23 +13,24 @@ const openai = new OpenAI({ apiKey: secrets.openaiApiKey });
 
 export async function POST() {
   try {
-    // 1. Fetch 1000 tweets with pineId not null
+    // 1. Fetch tweets from last week with pineId not null
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const tweets = await prisma.tweet.findMany({
-      where: {
-        pineId: { not: null },
-        timestamp: { gte: oneWeekAgo },
-      },
-      include: {
-        user: {
-          select: {
-            username: true,
-            smartFollowingCount: true,
+    const tweets = (
+      await prisma.tweet.findMany({
+        where: {
+          pineId: { not: null },
+          timestamp: { gte: oneWeekAgo },
+        },
+        include: {
+          user: {
+            select: {
+              username: true,
+              smartFollowingCount: true,
+            },
           },
         },
-      },
-      // take: 1000,
-    });
+      })
+    ).filter((tweet) => tweet.text.length >= 50);
 
     if (!tweets.length) {
       return Response.json({ message: 'No tweets found to compute.' });
@@ -137,7 +138,7 @@ export async function POST() {
         }
         // Get topic (2-3 words)
         const topicResponse = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -159,7 +160,7 @@ What is the main topic of these tweets?\n
         });
         // Get summary (2-3 sentences)
         const summaryResponse = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -190,6 +191,7 @@ What is the main topic of these tweets?\n
             tweets.find((t) => t.id === highlightTweet.id)?.user
               .smartFollowingCount ?? null,
           computedAt: now,
+          tweetIds: clusterTweets.map((t) => t.id),
         };
       }),
     );
