@@ -32,6 +32,8 @@ export async function POST() {
       })
     ).filter((tweet) => tweet.text.length >= 50);
 
+    console.log('Processing Tweets: ', tweets.length);
+
     if (!tweets.length) {
       return Response.json({ message: 'No tweets found to compute.' });
     }

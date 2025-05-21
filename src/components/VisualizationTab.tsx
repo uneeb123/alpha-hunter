@@ -141,10 +141,7 @@ const VisualizationTab = () => {
                   }}
                 >
                   <div style={{ marginBottom: 8 }}>
-                    <b>Topic:</b> {d.topic}
-                  </div>
-                  <div style={{ marginBottom: 8 }}>
-                    <b>Cluster Size:</b> {d.count} tweets
+                    <b>{d.topic}</b>
                   </div>
                   <div style={{ color: '#888', fontSize: '0.9em' }}>
                     Click point for details
@@ -254,9 +251,6 @@ const VisualizationTab = () => {
               )}
             </div>
           )}
-          <div style={{ marginBottom: 12 }}>
-            <b>Cluster Size:</b> {popover.cluster.count} tweets
-          </div>
           {Array.isArray(popover.cluster.tweetIds) &&
             popover.cluster.tweetIds.length > 0 && (
               <div style={{ marginBottom: 12 }}>
@@ -278,7 +272,6 @@ const VisualizationTab = () => {
                         rel="noopener noreferrer"
                         style={{
                           display: 'inline-block',
-                          // marginRight: 6,
                           verticalAlign: 'middle',
                         }}
                         title={`Open tweet ${idx + 1}`}
