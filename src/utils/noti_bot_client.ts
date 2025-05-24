@@ -4,13 +4,37 @@ import { Debugger } from '@/utils/debugger';
 import { getSecrets } from '@/utils/secrets';
 import {
   getCryptoNews,
-  getEmergingMemecoins,
   getRecentNFTMints,
+  getMemecoinDetails,
 } from './grok_workflow';
+
+function getOptionsKeyboard() {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback('Trending Crypto News 📈', 'trending_crypto_news')],
+    [Markup.button.callback('Recent NFT Mints 🖼️', 'recent_nft_mints')],
+    [Markup.button.callback('Search Memecoin 🔎', 'get_meme_details')],
+  ]);
+}
+
+function replyWithGrokResult(
+  ctx: any,
+  grokReply: { content: string; xCitations: string[] },
+) {
+  let replyText = grokReply.content;
+  if (grokReply.xCitations.length > 0) {
+    const sources = grokReply.xCitations.map((url) => `${url}`).join('\n');
+    replyText += `\n\n*Sources*\n${sources}`;
+  }
+  return ctx.reply(replyText, {
+    parse_mode: 'Markdown',
+    disable_web_page_preview: true,
+  });
+}
 
 export class NotiBotClient {
   private bot: Telegraf;
   private debug = Debugger.getInstance();
+  private waitingForMemecoin: { [chatId: number]: boolean } = {};
 
   constructor(botToken: string) {
     this.bot = new Telegraf(botToken);
@@ -20,28 +44,13 @@ export class NotiBotClient {
   public setupMessageHandlers() {
     this.bot.start(async (ctx) => {
       await ctx.reply(
-        'Cool! Here are a few areas of interest I specialize in, which are you interested in diving into?',
-        Markup.inlineKeyboard([
-          [
-            Markup.button.callback(
-              'Trending Crypto News 📈',
-              'trending_crypto_news',
-            ),
-          ],
-          [
-            Markup.button.callback(
-              'Emerging Memecoins 🐸',
-              'emerging_memecoins',
-            ),
-          ],
-          [Markup.button.callback('Recent NFT Mints 🖼️', 'recent_nft_mints')],
-        ]),
+        '_Cool! Here are a few areas of interest I specialize in, which are you interested in diving into?_',
+        {
+          parse_mode: 'Markdown',
+          reply_markup: getOptionsKeyboard().reply_markup,
+        },
       );
     });
-
-    // this.bot.command('trending-tokens', async (ctx) => {
-    //   await ctx.reply('Trending tokens: Bitcoin, Ethereum, Solana');
-    // });
 
     this.bot.on('text', async (ctx) => {
       const message = ctx.message.text;
@@ -49,18 +58,44 @@ export class NotiBotClient {
       this.debug.info(
         `NotiBot received message from chat ${chatId}: ${message}`,
       );
+      if (this.waitingForMemecoin[chatId]) {
+        this.waitingForMemecoin[chatId] = false;
+        await ctx.reply('_Fetching details for your memecoin..._', {
+          parse_mode: 'Markdown',
+        });
+        try {
+          const detailsReply = await getMemecoinDetails(message);
+          await replyWithGrokResult(ctx, detailsReply);
+        } catch (error) {
+          this.debug.error('Error fetching memecoin details:', error as Error);
+          await ctx.reply(
+            'Sorry, I encountered an error while fetching the memecoin details. Please try again later.',
+          );
+        }
+        await ctx.reply('_What else would you like to know?_', {
+          parse_mode: 'Markdown',
+          reply_markup: getOptionsKeyboard().reply_markup,
+        });
+        return;
+      }
       // Add custom logic for NotiBot here
     });
 
-    // Handle callback queries (button clicks)
     this.bot.action('trending_crypto_news', async (ctx) => {
       await ctx.answerCbQuery();
-      await ctx.reply('Great choice! Let me fetch the latest crypto news...');
+      await ctx.reply(
+        '_Great choice! Let me fetch the latest crypto news..._',
+        {
+          parse_mode: 'Markdown',
+        },
+      );
 
       try {
-        const news = await getCryptoNews();
-        await ctx.reply(`${news}`, {
+        const newsReply = await getCryptoNews();
+        await replyWithGrokResult(ctx, newsReply);
+        await ctx.reply('_What else?_', {
           parse_mode: 'Markdown',
+          reply_markup: getOptionsKeyboard().reply_markup,
         });
       } catch (error) {
         this.debug.error('Error fetching crypto news:', error as Error);
@@ -70,31 +105,34 @@ export class NotiBotClient {
       }
     });
 
-    this.bot.action('emerging_memecoins', async (ctx) => {
+    this.bot.action('get_meme_details', async (ctx) => {
       await ctx.answerCbQuery();
-      await ctx.reply('Solid choice! Let me fetch the latest memecoin news...');
-
-      try {
-        const news = await getEmergingMemecoins();
-        await ctx.reply(`${news}`, {
+      const chatId = ctx.chat?.id;
+      if (chatId === undefined) return;
+      this.waitingForMemecoin[chatId] = true;
+      await ctx.reply(
+        '_Please enter the name of the memecoin you want details for._',
+        {
           parse_mode: 'Markdown',
-        });
-      } catch (error) {
-        this.debug.error('Error fetching memecoin news:', error as Error);
-        await ctx.reply(
-          'Sorry, I encountered an error while fetching the memecoin news. Please try again later.',
-        );
-      }
+        },
+      );
     });
 
     this.bot.action('recent_nft_mints', async (ctx) => {
       await ctx.answerCbQuery();
-      await ctx.reply('Excellent choice! Let me fetch the latest NFT mints...');
+      await ctx.reply(
+        '_Excellent choice! Let me fetch the latest NFT mints..._',
+        {
+          parse_mode: 'Markdown',
+        },
+      );
 
       try {
-        const mints = await getRecentNFTMints();
-        await ctx.reply(`${mints}`, {
+        const mintsReply = await getRecentNFTMints();
+        await replyWithGrokResult(ctx, mintsReply);
+        await ctx.reply('_Anything else?_', {
           parse_mode: 'Markdown',
+          reply_markup: getOptionsKeyboard().reply_markup,
         });
       } catch (error) {
         this.debug.error('Error fetching NFT mints:', error as Error);
