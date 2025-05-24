@@ -43,12 +43,6 @@ export default function Navigation() {
         >
           Ask
         </Link>
-        <Link
-          href="/bot-controls"
-          style={{ textDecoration: 'none', color: '#0070f3' }}
-        >
-          Bot Controls
-        </Link>
       </div>
     </nav>
   );
