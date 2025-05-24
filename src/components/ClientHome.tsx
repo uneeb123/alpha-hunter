@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import UserTable from '@/components/UserTable';
 import FilterForm from '@/components/FilterForm';
 import { User } from '@prisma/client';
@@ -36,10 +36,6 @@ export default function ClientHome({
   direction,
   safeSearchParams,
 }: ClientHomeProps) {
-  const [tab, setTab] = useState<'metrics' | 'visualization' | 'ask'>(
-    'metrics',
-  );
-
   // Filtering and sorting logic can be moved here if needed, or passed from server
 
   return (
