@@ -1,4 +1,5 @@
 import { Telegraf, Markup } from 'telegraf';
+import { message } from 'telegraf/filters';
 import { Update } from 'telegraf/types';
 import { Debugger } from '@/utils/debugger';
 import { getSecrets } from '@/utils/secrets';
@@ -7,6 +8,7 @@ import {
   getRecentNFTMints,
   getMemecoinDetails,
 } from './grok_workflow';
+import { prisma } from '@/lib/prisma';
 
 function getOptionsKeyboard() {
   return Markup.inlineKeyboard([
@@ -16,19 +18,41 @@ function getOptionsKeyboard() {
   ]);
 }
 
-function replyWithGrokResult(
+async function replyWithGrokResult(
   ctx: any,
   grokReply: { content: string; xCitations: string[] },
 ) {
   let replyText = grokReply.content;
   if (grokReply.xCitations.length > 0) {
-    const sources = grokReply.xCitations.map((url) => `${url}`).join('\n');
+    const sources = grokReply.xCitations
+      .slice(0, 3)
+      .map((url) => url.replace(/_/g, '\\_'))
+      .join('\n');
     replyText += `\n\n*Sources*\n${sources}`;
   }
-  return ctx.reply(replyText, {
-    parse_mode: 'Markdown',
-    disable_web_page_preview: true,
-  });
+  // Chunk the replyText into 4000 character pieces
+  const chunks = [];
+  let text = replyText;
+  while (text.length > 0) {
+    chunks.push(text.slice(0, 4000));
+    text = text.slice(4000);
+  }
+  try {
+    for (const chunk of chunks) {
+      await ctx.reply(chunk, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true,
+      });
+    }
+  } catch (err) {
+    console.log(chunks);
+    // If Markdown fails, try sending as plain text
+    for (const chunk of chunks) {
+      await ctx.reply(chunk, {
+        disable_web_page_preview: true,
+      });
+    }
+  }
 }
 
 export class NotiBotClient {
@@ -43,6 +67,13 @@ export class NotiBotClient {
 
   public setupMessageHandlers() {
     this.bot.start(async (ctx) => {
+      const chatId = ctx.chat.id.toString();
+      // Save chat ID to database
+      await prisma.telegramChat.upsert({
+        where: { chatId },
+        update: { updatedAt: new Date() },
+        create: { chatId },
+      });
       await ctx.reply(
         '_Cool! Here are a few areas of interest I specialize in, which are you interested in diving into?_',
         {
@@ -52,7 +83,8 @@ export class NotiBotClient {
       );
     });
 
-    this.bot.on('text', async (ctx) => {
+    this.bot.on(message('text'), async (ctx) => {
+      this.debug.info(JSON.stringify(ctx, null, 2));
       const message = ctx.message.text;
       const chatId = ctx.chat.id;
       this.debug.info(
@@ -72,7 +104,7 @@ export class NotiBotClient {
             'Sorry, I encountered an error while fetching the memecoin details. Please try again later.',
           );
         }
-        await ctx.reply('_What else would you like to know?_', {
+        await ctx.reply('_Anything else would you like to know?_', {
           parse_mode: 'Markdown',
           reply_markup: getOptionsKeyboard().reply_markup,
         });
@@ -93,7 +125,7 @@ export class NotiBotClient {
       try {
         const newsReply = await getCryptoNews();
         await replyWithGrokResult(ctx, newsReply);
-        await ctx.reply('_What else?_', {
+        await ctx.reply('_Anything else?_', {
           parse_mode: 'Markdown',
           reply_markup: getOptionsKeyboard().reply_markup,
         });
@@ -181,4 +213,51 @@ export class NotiBotClient {
       throw error;
     }
   }
+
+  public async broadcastMessage() {
+    try {
+      const newsReply = await getCryptoNews();
+      let message = `_${"Here's your daily digest:"}_\n\n${newsReply.content}`;
+      if (newsReply.xCitations && newsReply.xCitations.length > 0) {
+        message +=
+          `\n\n*Sources:*\n` +
+          newsReply.xCitations
+            .slice(0, 3)
+            .map((url) => `- ${url.replace(/_/g, '\\_')}`)
+            .join('\n');
+      }
+      const chats = await prisma.telegramChat.findMany();
+      for (const chat of chats) {
+        try {
+          await this.bot.telegram.sendMessage(chat.chatId, message, {
+            parse_mode: 'Markdown',
+          });
+        } catch (error) {
+          this.debug.error(
+            `Failed to send message to chat ${chat.chatId}:`,
+            error as Error,
+          );
+          // Remove invalid chat IDs
+          if ((error as any)?.response?.error_code === 403) {
+            await prisma.telegramChat.delete({
+              where: { chatId: chat.chatId },
+            });
+          }
+        }
+      }
+      return true;
+    } catch (error) {
+      this.debug.error('Error broadcasting message:', error as Error);
+      return false;
+    }
+  }
+}
+
+let notiBotClient: NotiBotClient | undefined;
+export function getNotiBotClient() {
+  if (!notiBotClient) {
+    const { notiBotToken } = getSecrets();
+    notiBotClient = new NotiBotClient(notiBotToken);
+  }
+  return notiBotClient;
 }

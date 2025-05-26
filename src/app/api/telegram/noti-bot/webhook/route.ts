@@ -1,16 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSecrets } from '@/utils/secrets';
-import { NotiBotClient } from '@/utils/noti_bot_client';
-
-let notiBotClient: NotiBotClient;
-
-function getNotiBotClient() {
-  if (!notiBotClient) {
-    const secrets = getSecrets();
-    notiBotClient = new NotiBotClient(secrets.notiBotToken);
-  }
-  return notiBotClient;
-}
+import { getNotiBotClient } from '@/utils/noti_bot_client';
 
 export async function POST(req: NextRequest) {
   try {

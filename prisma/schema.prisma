@@ -135,3 +135,12 @@ model TweetEmbeddingCluster {
 
   @@index([computedAt])
 }
+
+model TelegramChat {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chatId])
+}

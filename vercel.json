@@ -7,6 +7,10 @@
     {
       "path": "/api/schedule-fetch",
       "schedule": "*/3 * * * *"
+    },
+    {
+      "path": "/api/telegram/noti-bot/broadcast",
+      "schedule": "0 9 * * *"
     }
   ]
 }

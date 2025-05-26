@@ -1,10 +1,6 @@
 import axios from 'axios';
 import { getSecrets } from './secrets';
-
-function truncateMessage(message: string, maxLength: number): string {
-  if (message.length <= maxLength) return message;
-  return message.slice(0, maxLength - 3) + '...';
-}
+import { prisma } from '@/lib/prisma';
 
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -25,31 +21,65 @@ You may use Markdown for bold (with single asterisks, e.g. *text*) and lists. DO
 Do not use heading markdown (e.g., #, ##, ###) or include any links.
 Do not include any introduction or ending.
 Just answer the question.
+BE SPECIFIC, DON'T USE GENERIC TERMS
+DO NOT BEGIN OR END THE SENTENCE BY SAYING "Posts found on X"
 ${userPrompt}`;
 }
+
+// function buildPrompt(userPrompt: string): string {
+//   return `${userPrompt}`;
+// }
 
 export interface GrokReply {
   content: string;
   xCitations: string[];
 }
 
-async function callGrok(prompt: string, maxLength = 1000): Promise<GrokReply> {
+// Helper to get top X usernames for x_handles
+async function getTopXHandles(limit = 100): Promise<string[]> {
+  const users = await prisma.user.findMany({
+    where: {
+      followersCount: { gte: 5000 },
+      followingCount: { gte: 250 },
+      smartFollowingCount: { gte: 300 },
+    },
+    orderBy: { tweetCount: 'desc' },
+    take: limit,
+    select: { username: true },
+  });
+  // Twitter handles should not include the @
+  return users.map((u) => u.username);
+}
+
+async function callGrok(
+  prompt: string,
+  sources: any = null,
+): Promise<GrokReply> {
   const { grokApiKey } = getSecrets();
   const { from_date, to_date } = getLast24HoursRange();
+  const requestBody: any = {
+    model: 'grok-3-mini-fast',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a leader in crypto and blockchain news.',
+      },
+      { role: 'user', content: buildPrompt(prompt) },
+    ],
+    search_parameters: {
+      mode: 'on',
+      return_citations: true,
+      from_date,
+      to_date,
+    },
+  };
+  if (sources) {
+    requestBody.search_parameters.sources = sources;
+  }
   try {
     const response = await axios.post(
       'https://api.x.ai/v1/chat/completions',
-      {
-        model: 'grok-3-latest',
-        messages: [{ role: 'user', content: buildPrompt(prompt) }],
-        search_parameters: {
-          mode: 'on',
-          return_citations: true,
-          from_date,
-          to_date,
-        },
-        sources: [{ type: 'x' }],
-      },
+      requestBody,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +94,7 @@ async function callGrok(prompt: string, maxLength = 1000): Promise<GrokReply> {
       url.startsWith('https://x.com/'),
     );
     return {
-      content: truncateMessage(content, maxLength),
+      content: content,
       xCitations,
     };
   } catch (error: any) {
@@ -76,23 +106,40 @@ async function callGrok(prompt: string, maxLength = 1000): Promise<GrokReply> {
   }
 }
 
-export async function getCryptoNews(maxLength = 1000): Promise<GrokReply> {
-  return callGrok(
-    'What are the most important trending news in crypto right now?',
-    maxLength,
-  );
+export async function getCryptoNews(): Promise<GrokReply> {
+  /*
+  const x_handles = [
+    'coinbureau',
+    'WatcherGuru',
+    'Cointelegraph',
+    'AutismCapital',
+    'goodgamepodxyz',
+  ];
+  */
+  const x_handles = await getTopXHandles();
+  return callGrok('What are the last news and updates in crypto?', [
+    { type: 'x', x_handles },
+  ]);
 }
 
-export async function getRecentNFTMints(maxLength = 1000): Promise<GrokReply> {
-  return callGrok('What are the most recent notable NFT mints?', maxLength);
+export async function getRecentNFTMints(): Promise<GrokReply> {
+  return callGrok('What are the most recent notable NFT mints?', null);
 }
 
-export async function getMemecoinDetails(
-  memecoin: string,
-  maxLength = 1000,
-): Promise<GrokReply> {
+export async function getMemecoinDetails(memecoin: string): Promise<GrokReply> {
   return callGrok(
     `Give me the latest details, news, and sentiment about the memecoin '${memecoin}'.`,
-    maxLength,
+    null,
   );
 }
+
+/*
+
+Interesting Prompts
+
+What are people saying about Solana on X right now?
+Are there any recent token unlocks?
+Which new tokens are getting sudden traction in the last 6 hours?
+
+
+ */
