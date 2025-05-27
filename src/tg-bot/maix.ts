@@ -10,6 +10,7 @@ import { trendingCryptoNewsHandler } from './handler/trendingCryptoNewsHandler';
 import { getMemeDetailsHandler } from './handler/getMemeDetailsHandler';
 import { recentNftMintsHandler } from './handler/recentNftMintsHandler';
 import { catchHandler } from './handler/catchHandler';
+import { settingsHandler } from './handler/settingsHandler';
 
 export class Maix {
   private bot: Telegraf;
@@ -21,6 +22,7 @@ export class Maix {
     const waitingForMemecoin: { [chatId: number]: boolean } = {};
     const deps = { debug: this.debug, prisma, waitingForMemecoin };
     startHandler(this.bot, deps);
+    settingsHandler(this.bot, deps);
     textHandler(this.bot, deps);
     trendingCryptoNewsHandler(this.bot, deps);
     getMemeDetailsHandler(this.bot, deps);
@@ -73,7 +75,9 @@ export class Maix {
             .map((url) => `- ${url.replace(/_/g, '\\_')}`)
             .join('\n');
       }
-      const chats = await prisma.telegramChat.findMany();
+      const chats = await prisma.telegramChat.findMany({
+        where: { subscribed: true },
+      });
       await Promise.all(
         chats.map(async (chat) => {
           try {

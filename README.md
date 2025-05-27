@@ -23,6 +23,13 @@ curl -X POST https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/ap
 curl -X POST https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api/telegram/noti-bot/delete-webhook
 curl -X POST https://admin.singularitylabs.co/api/telegram/noti-bot/set-webhook
 
+# Telegram Bot
+
+## Commands
+
+start - Initiates the bot
+settings - Manage your subscription and customize your preferences
+
 # Scripts
 
 ## Management

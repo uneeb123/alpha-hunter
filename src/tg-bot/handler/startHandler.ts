@@ -1,5 +1,6 @@
 import { Telegraf, Context } from 'telegraf';
-import { getOptionsKeyboard } from '../maix_utils';
+import { getOnboardingOptionsKeyboard } from '../maix_utils';
+import { getCryptoNews } from '../grok_workflow';
 
 interface StartHandlerDeps {
   prisma: any;
@@ -12,15 +13,42 @@ export function startHandler(bot: Telegraf, dependencies: StartHandlerDeps) {
     const chatId = ctx.chat.id.toString();
     await prisma.telegramChat.upsert({
       where: { chatId },
-      update: { updatedAt: new Date() },
-      create: { chatId },
+      update: { updatedAt: new Date(), subscribed: true },
+      create: { chatId, subscribed: true },
     });
+
+    // 1. Show trending crypto news
     await ctx.reply(
-      '_Cool! Here are a few areas of interest I specialize in, which are you interested in diving into?_',
-      {
-        parse_mode: 'Markdown',
-        reply_markup: getOptionsKeyboard().reply_markup,
-      },
+      "_Hey there! My name is Maix. I'll be your guide in navigating the crypto landscape. Let me fetch the latest crypto news..._",
+      { parse_mode: 'Markdown' },
     );
+    const newsReply = await getCryptoNews();
+    let newsText = newsReply.content;
+    // No sources on start
+    /*
+    if (newsReply.xCitations && newsReply.xCitations.length > 0) {
+      const sources = newsReply.xCitations
+        .slice(0, 3)
+        .map((url) => url.replace(/_/g, '\\_'))
+        .join('\n');
+      newsText += `\n\n*Sources*\n${sources}`;
+    }
+    */
+    await ctx.reply(newsText, {
+      parse_mode: 'Markdown',
+      disable_web_page_preview: true,
+    } as any);
+
+    // 2. Show subscription message
+    await ctx.reply(
+      '_You are now subscribed to receive daily digest at 9 am PST. To manage your subscription, type /settings_',
+      { parse_mode: 'Markdown' },
+    );
+
+    // 3. Show onboarding options
+    await ctx.reply('_Dive deeper into any of the following areas_', {
+      parse_mode: 'Markdown',
+      reply_markup: getOnboardingOptionsKeyboard().reply_markup,
+    });
   });
 }
