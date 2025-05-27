@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getSecrets } from '@/utils/secrets';
 import { Debugger } from '@/utils/debugger';
-import { NotiBotClient } from '@/utils/noti_bot_client';
+import { Maix } from '@/tg-bot/maix';
 
 const debug = Debugger.getInstance();
 
 export async function POST() {
   try {
     const secrets = getSecrets();
-    const client = new NotiBotClient(secrets.notiBotToken);
+    const client = new Maix(secrets.notiBotToken);
     await client.deleteWebhook();
     debug.info('NotiBot webhook deleted successfully');
     return NextResponse.json({ success: true });

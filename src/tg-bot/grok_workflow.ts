@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSecrets } from './secrets';
+import { getSecrets } from '../utils/secrets';
 import { prisma } from '@/lib/prisma';
 
 function formatDate(date: Date): string {

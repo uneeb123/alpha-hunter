@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
-import { getNotiBotClient } from '@/utils/noti_bot_client';
+import { getMaix } from '@/tg-bot/maix';
 
 export async function POST(req: NextRequest) {
   try {
-    const client = getNotiBotClient();
+    const client = getMaix();
     const body = await req.json();
     const success = await client.handleUpdate(body);
     if (success) {
