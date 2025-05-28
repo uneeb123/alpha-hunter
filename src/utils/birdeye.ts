@@ -48,7 +48,7 @@ export async function getTrendingMemecoins(): Promise<BirdeyeTokenInfo[]> {
         return marketcap < 1_000_000_000;
       });
       allTokens = allTokens.concat(memecoins);
-    } catch (error) {
+    } catch {
       // Optionally log or handle error
     }
   }

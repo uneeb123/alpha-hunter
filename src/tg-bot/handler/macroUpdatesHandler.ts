@@ -2,20 +2,23 @@ import { Telegraf, Context } from 'telegraf';
 import { getOptionsKeyboard, replyWithGrokResult } from '../maix_utils';
 import { getCryptoNews } from '../grok_workflow';
 
-interface TrendingCryptoNewsHandlerDeps {
+interface MacroUpdatesHandlerDeps {
   debug: any;
 }
 
-export function trendingCryptoNewsHandler(
+export function macroUpdatesHandler(
   bot: Telegraf,
-  dependencies: TrendingCryptoNewsHandlerDeps,
+  dependencies: MacroUpdatesHandlerDeps,
 ) {
   const { debug } = dependencies;
-  bot.action('trending_crypto_news', async (ctx: Context) => {
+  bot.action('macro_updates', async (ctx: Context) => {
     await ctx.answerCbQuery();
-    await ctx.reply('_Great choice! Let me fetch the latest crypto news..._', {
-      parse_mode: 'Markdown',
-    });
+    await ctx.reply(
+      '_Great choice! Let me fetch the latest macro updates..._',
+      {
+        parse_mode: 'Markdown',
+      },
+    );
     try {
       const newsReply = await getCryptoNews();
       await replyWithGrokResult(ctx, newsReply);
@@ -24,7 +27,7 @@ export function trendingCryptoNewsHandler(
         reply_markup: getOptionsKeyboard().reply_markup,
       });
     } catch (error) {
-      debug.error('Error fetching crypto news:', error as Error);
+      debug.error('Error fetching macro updates:', error as Error);
       await ctx.reply(
         'Sorry, I encountered an error while fetching the news. Please try again later.',
       );

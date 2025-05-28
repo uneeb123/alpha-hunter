@@ -1,5 +1,8 @@
 import { Telegraf, Context } from 'telegraf';
-import { getOnboardingOptionsKeyboard } from '../maix_utils';
+import {
+  getOnboardingOptionsKeyboard,
+  getMarketSummaryForStartHandler,
+} from '../maix_utils';
 import { getCryptoNews } from '../grok_workflow';
 
 interface StartHandlerDeps {
@@ -19,11 +22,23 @@ export function startHandler(bot: Telegraf, dependencies: StartHandlerDeps) {
 
     // 1. Show trending crypto news
     await ctx.reply(
-      "_Hey there! My name is Maix. I'll be your guide in navigating the crypto landscape. Let me fetch the latest crypto news..._",
+      "_Hey there! My name is Maix. I'll be your guide in navigating the crypto landscape. Allow me to get you situated._",
       { parse_mode: 'Markdown' },
     );
+
+    // 1a. Show BTC, ETH, SOL prices and trending memecoins
+    await ctx.reply("_Let's begin with an overview of the market..._", {
+      parse_mode: 'Markdown',
+    });
+    const priceMsg = await getMarketSummaryForStartHandler();
+    await ctx.reply(priceMsg, { parse_mode: 'Markdown' });
+
+    // 1b. Show trending crypto news
+    await ctx.reply("_Now let's explore some macro news..._", {
+      parse_mode: 'Markdown',
+    });
     const newsReply = await getCryptoNews();
-    let newsText = newsReply.content;
+    const newsText = newsReply.content;
     // No sources on start
     /*
     if (newsReply.xCitations && newsReply.xCitations.length > 0) {

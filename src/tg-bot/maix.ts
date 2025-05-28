@@ -6,11 +6,12 @@ import { getCryptoNews } from './grok_workflow';
 import { prisma } from '@/lib/prisma';
 import { startHandler } from './handler/startHandler';
 import { textHandler } from './handler/textHandler';
-import { trendingCryptoNewsHandler } from './handler/trendingCryptoNewsHandler';
+import { macroUpdatesHandler } from './handler/macroUpdatesHandler';
 import { getMemeDetailsHandler } from './handler/getMemeDetailsHandler';
 import { recentNftMintsHandler } from './handler/recentNftMintsHandler';
 import { catchHandler } from './handler/catchHandler';
 import { settingsHandler } from './handler/settingsHandler';
+import { marketOverviewHandler } from './handler/marketOverviewHandler';
 
 export class Maix {
   private bot: Telegraf;
@@ -24,9 +25,10 @@ export class Maix {
     startHandler(this.bot, deps);
     settingsHandler(this.bot, deps);
     textHandler(this.bot, deps);
-    trendingCryptoNewsHandler(this.bot, deps);
+    macroUpdatesHandler(this.bot, deps);
     getMemeDetailsHandler(this.bot, deps);
     recentNftMintsHandler(this.bot, deps);
+    marketOverviewHandler(this.bot, deps);
     catchHandler(this.bot, deps);
   }
 
