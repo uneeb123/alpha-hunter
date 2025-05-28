@@ -9,7 +9,7 @@
       "schedule": "*/3 * * * *"
     },
     {
-      "path": "/api/telegram/noti-bot/broadcast",
+      "path": "/api/maix/broadcast",
       "schedule": "0 9 * * *"
     }
   ]

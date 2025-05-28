@@ -68,7 +68,12 @@ export class Maix {
   public async broadcastMessage() {
     try {
       const newsReply = await getCryptoNews();
-      let message = `_${"Here's your daily digest:"}_\n\n${newsReply.content}`;
+      const today = new Date().toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+      });
+      let message = `_${"Here's your daily digest for " + today + ':'}_\n\n${newsReply.content}`;
       if (newsReply.xCitations && newsReply.xCitations.length > 0) {
         message +=
           `\n\n*Sources:*\n` +
