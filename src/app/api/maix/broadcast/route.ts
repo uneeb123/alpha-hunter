@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getMaix } from '@/tg-bot/maix';
 
 export async function POST() {
