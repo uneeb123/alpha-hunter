@@ -22,7 +22,7 @@ export function startHandler(bot: Telegraf, dependencies: StartHandlerDeps) {
 
     // 1. Show trending crypto news
     await ctx.reply(
-      "_Hey there! My name is Maix. I'll be your guide in navigating the crypto landscape. Allow me to get you situated._",
+      "_Hey there! My name is Maix. I'll be your guide in navigating the crypto landscape._",
       { parse_mode: 'Markdown' },
     );
 
