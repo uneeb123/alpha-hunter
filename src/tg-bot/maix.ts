@@ -90,7 +90,8 @@ export class Maix {
           try {
             await this.bot.telegram.sendMessage(chat.chatId, message, {
               parse_mode: 'Markdown',
-            });
+              disable_web_page_preview: true,
+            } as any);
           } catch (error) {
             this.debug.error(
               `Failed to send message to chat ${chat.chatId}:`,
