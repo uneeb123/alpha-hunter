@@ -1,14 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/embed-tweets",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/schedule-fetch",
-      "schedule": "*/3 * * * *"
-    },
-    {
       "path": "/api/maix/broadcast",
       "schedule": "0 9 * * *"
     }
