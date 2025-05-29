@@ -23,6 +23,11 @@ curl -X POST https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/ap
 curl -X POST https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api/maix/delete-webhook
 curl -X POST https://admin.singularitylabs.co/api/maix/set-webhook
 
+## Manually broadcast
+
+curl -X GET https://admin.singularitylabs.co/api/maix/broadcast
+curl -X GET https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api/maix/broadcast
+
 # Telegram Bot
 
 ## Commands

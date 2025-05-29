@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getMaix } from '@/tg-bot/maix';
 
-export async function POST() {
+export async function GET() {
   try {
     const client = getMaix();
     const success = await client.broadcastMessage();
