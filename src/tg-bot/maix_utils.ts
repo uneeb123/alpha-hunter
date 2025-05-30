@@ -24,15 +24,6 @@ export function getSubscribeKeyboard(isSubscribed: boolean) {
   ]);
 }
 
-export function getOnboardingOptionsKeyboard() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback('Market Overview 📊', 'market_overview')],
-    [Markup.button.callback('Macro Updates 🗞️', 'macro_updates')],
-    [Markup.button.callback('Recent NFT Mints 🖼️', 'recent_nft_mints')],
-    [Markup.button.callback('Search Memecoin 🔎', 'get_meme_details')],
-  ]);
-}
-
 export async function replyWithGrokResult(
   ctx: any,
   grokReply: { content: string; xCitations: string[] },

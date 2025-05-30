@@ -24,11 +24,11 @@ export class Maix {
     const deps = { debug: this.debug, prisma, waitingForMemecoin };
     startHandler(this.bot, deps);
     settingsHandler(this.bot, deps);
+    marketOverviewHandler(this.bot, deps);
     textHandler(this.bot, deps);
     macroUpdatesHandler(this.bot, deps);
     getMemeDetailsHandler(this.bot, deps);
     recentNftMintsHandler(this.bot, deps);
-    marketOverviewHandler(this.bot, deps);
     catchHandler(this.bot, deps);
   }
 

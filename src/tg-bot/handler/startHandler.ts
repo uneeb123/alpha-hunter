@@ -1,6 +1,6 @@
 import { Telegraf, Context } from 'telegraf';
 import {
-  getOnboardingOptionsKeyboard,
+  getOptionsKeyboard,
   getMarketSummaryForStartHandler,
 } from '../maix_utils';
 import { getCryptoNews } from '../grok_workflow';
@@ -63,7 +63,7 @@ export function startHandler(bot: Telegraf, dependencies: StartHandlerDeps) {
     // 3. Show onboarding options
     await ctx.reply('_Dive deeper into any of the following areas_', {
       parse_mode: 'Markdown',
-      reply_markup: getOnboardingOptionsKeyboard().reply_markup,
+      reply_markup: getOptionsKeyboard().reply_markup,
     });
   });
 }
