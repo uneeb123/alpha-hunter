@@ -14,7 +14,7 @@ curl -X POST https://admin.singularitylabs.co/api/telegram/set-webhook
 
 curl -X POST https://e664-2601-646-300-5e0-b974-eee8-c8c9-d14c.ngrok-free.app/api/telegram/set-webhook
 
-## For Noti Bot
+## Setting up Maix locally
 
 Make sure to replace PRODUCTION_URL in Environment Variables
 

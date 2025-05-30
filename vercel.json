@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/maix/broadcast",
-      "schedule": "0 9 * * *"
+      "schedule": "0 17 * * *"
     }
   ]
 }
