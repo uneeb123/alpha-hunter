@@ -4,8 +4,6 @@ import TokensTable from '@/components/UserTable';
 import FilterForm from '@/components/FilterForm';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
-const CHAINS = ['solana', 'base', 'sui'] as const;
-
 const CHAIN_OPTIONS = [
   { value: 'all', label: 'All' },
   { value: 'solana', label: 'Solana' },
