@@ -16,13 +16,13 @@ export default function Navigation() {
         style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 24 }}
       >
         <Link
-          href="/"
+          href="/tokens"
           style={{
-            textDecoration: pathname === '/' ? 'underline' : 'none',
+            textDecoration: pathname === '/tokens' ? 'underline' : 'none',
             color: '#0070f3',
           }}
         >
-          User Metrics
+          Tokens
         </Link>
         <Link
           href="/visualization"
@@ -42,6 +42,15 @@ export default function Navigation() {
           }}
         >
           Ask
+        </Link>
+        <Link
+          href="/user-metrics"
+          style={{
+            textDecoration: pathname === '/user-metrics' ? 'underline' : 'none',
+            color: '#0070f3',
+          }}
+        >
+          User Metrics
         </Link>
       </div>
     </nav>
