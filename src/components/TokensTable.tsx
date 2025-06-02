@@ -21,6 +21,7 @@ const columns = [
   { key: 'mc', label: 'Market Cap' },
   { key: 'liquidity', label: 'Liquidity' },
   { key: 'lastTradeUnixTime', label: 'Last Trade' },
+  { key: 'copy', label: '' },
 ];
 
 function safeSearchParams(
@@ -178,6 +179,11 @@ export default function TokensTable({
               >
                 {formatDate(token.lastTradeUnixTime)}
               </td>
+              <td
+                style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
+              >
+                <CopyAddressButton address={token.address} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -235,5 +241,77 @@ function TokenLogo({ logoURI, symbol }: { logoURI: string; symbol: string }) {
       style={{ width: 24, height: 24, borderRadius: 12, objectFit: 'cover' }}
       onError={() => setError(true)}
     />
+  );
+}
+
+function TokenAddressLink({
+  address,
+  chain,
+}: {
+  address: string;
+  chain: string;
+}) {
+  if (!address) return null;
+  let explorerBase = '';
+  if (chain === 'solana') {
+    explorerBase = `https://solscan.io/token/${address}`;
+  } else if (chain === 'base') {
+    explorerBase = `https://basescan.org/token/${address}`;
+  } else if (chain === 'sui') {
+    explorerBase = `https://suiexplorer.com/object/${address}`;
+  }
+  const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return (
+    <a
+      href={explorerBase}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: '#0070f3', textDecoration: 'underline' }}
+      title={address}
+    >
+      {short}
+    </a>
+  );
+}
+
+function CopyAddressButton({ address }: { address: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = async () => {
+    if (!address) return;
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = address;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        padding: '4px 10px',
+        borderRadius: 4,
+        background: copied ? '#16a34a' : '#f2f2f2',
+        color: copied ? '#fff' : '#222',
+        border: 'none',
+        fontWeight: 500,
+        cursor: 'pointer',
+        fontSize: 13,
+        minWidth: 70,
+        transition: 'background 0.2s',
+      }}
+      title={address}
+    >
+      {copied ? 'Copied!' : 'Copy Address'}
+    </button>
   );
 }

@@ -49,7 +49,15 @@ export default function TokensClient({
   const metricColumns = [
     { key: 'min_liquidity', label: 'Min Liquidity' },
     { key: 'max_liquidity', label: 'Max Liquidity' },
+    { key: 'min_market_cap', label: 'Min Market Cap' },
   ];
+
+  // Apply client-side min_market_cap filter
+  const minMarketCap = filters.find((f) => f.key === 'min_market_cap')?.value;
+  const filteredTokens =
+    minMarketCap !== undefined
+      ? tokens.filter((t) => t.mc >= minMarketCap)
+      : tokens;
 
   function handleChainChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newChain = e.target.value;
@@ -182,7 +190,7 @@ export default function TokensClient({
         direction={String(direction)}
       />
       <TokensTable
-        tokens={tokens}
+        tokens={filteredTokens}
         sortKey={String(sortKey)}
         direction={String(direction)}
         searchParams={searchParams}
