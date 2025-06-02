@@ -1,27 +1,28 @@
 'use client';
 import React, { useState } from 'react';
-import { BirdeyeTokenListItem } from '@/utils/birdeye';
+import { User } from '@prisma/client';
+import axios from 'axios';
 
-type TokensTableProps = {
-  tokens: BirdeyeTokenListItem[];
+export type UserTableProps = {
+  users: User[];
   sortKey: string;
   direction: string;
   searchParams?: Record<string, string>;
-  onNextPage: () => void;
-  chain: string;
+  onNextPage?: () => void;
 };
 
 const columns = [
   { key: 'index', label: '#' },
-  { key: 'logo', label: '' },
   { key: 'name', label: 'Name' },
-  { key: 'symbol', label: 'Symbol' },
-  { key: 'chain', label: 'Chain' },
-  { key: 'v24hUSD', label: '24h Volume (USD)' },
-  { key: 'v24hChangePercent', label: '24h Change (%)' },
-  { key: 'mc', label: 'Market Cap' },
-  { key: 'liquidity', label: 'Liquidity' },
-  { key: 'lastTradeUnixTime', label: 'Last Trade' },
+  { key: 'username', label: 'Username' },
+  { key: 'followersCount', label: 'Followers' },
+  { key: 'followingCount', label: 'Following' },
+  { key: 'tweetCount', label: 'Tweets' },
+  { key: 'likeCount', label: 'Likes' },
+  { key: 'smartFollowingCount', label: 'Smart Following' },
+  { key: 'averageEngagement', label: 'Avg Engagement' },
+  { key: 'followerEngagementRatio', label: 'Follower Engagement Ratio' },
+  { key: 'delete', label: 'Delete' },
 ];
 
 function safeSearchParams(
@@ -37,34 +38,36 @@ function safeSearchParams(
   return out;
 }
 
-function formatNumber(n: number | null | undefined, digits = 2) {
-  if (n === null || n === undefined || isNaN(n)) return 'N/A';
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(digits)}B`;
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(digits)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(digits)}K`;
-  return `$${n.toFixed(digits)}`;
-}
-
-function formatDate(unix: number) {
-  const d = new Date(unix * 1000);
-  return d.toLocaleString();
-}
-
-export default function TokensTable({
-  tokens,
+export default function UserTable({
+  users: initialUsers,
   sortKey,
   direction,
   searchParams,
   onNextPage,
-  chain,
-}: TokensTableProps) {
+}: UserTableProps) {
+  const [users, setUsers] = useState(initialUsers);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    setDeletingId(id);
+    try {
+      await axios.post('/api/delete-user', { id });
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch {
+      alert('Failed to delete user.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   function getSortUrl(key: string) {
+    if (key === 'delete' || key === 'index') return undefined;
     const dir = sortKey === key && direction === 'desc' ? 'asc' : 'desc';
     const params = new URLSearchParams(safeSearchParams(searchParams));
     params.set('sortKey', key);
     params.set('direction', dir);
-    params.set('chain', chain);
-    return `?${params.toString()}`;
+    window.location.search = params.toString();
   }
 
   return (
@@ -81,42 +84,31 @@ export default function TokensTable({
                   borderBottom: '1px solid #ccc',
                   padding: '8px 4px',
                   textAlign: 'left',
-                  cursor: [
-                    'v24hUSD',
-                    'mc',
-                    'v24hChangePercent',
-                    'liquidity',
-                  ].includes(col.key)
-                    ? 'pointer'
-                    : 'default',
                   background: '#fafafa',
-                  width: col.key === 'logo' ? 32 : undefined,
+                  cursor:
+                    col.key !== 'delete' && col.key !== 'index'
+                      ? 'pointer'
+                      : 'default',
+                  color: sortKey === col.key ? '#0070f3' : undefined,
+                  userSelect: 'none',
                 }}
+                onClick={() => getSortUrl(col.key)}
               >
-                {['v24hUSD', 'mc', 'v24hChangePercent', 'liquidity'].includes(
-                  col.key,
-                ) ? (
-                  <a
-                    href={getSortUrl(col.key)}
-                    style={{ color: 'inherit', textDecoration: 'none' }}
-                  >
-                    {col.label}
-                    {sortKey === col.key
-                      ? direction === 'asc'
-                        ? ' ▲'
-                        : ' ▼'
-                      : ''}
-                  </a>
-                ) : (
-                  col.label
-                )}
+                {col.label}
+                {sortKey === col.key &&
+                  col.key !== 'delete' &&
+                  col.key !== 'index' && (
+                    <span style={{ marginLeft: 4 }}>
+                      {direction === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {tokens.map((token, idx) => (
-            <tr key={token.address}>
+          {users.map((user, idx) => (
+            <tr key={user.id}>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
@@ -125,116 +117,89 @@ export default function TokensTable({
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                <TokenLogo logoURI={token.logoURI} symbol={token.symbol} />
+                {user.name}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {token.name}
+                {user.username}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {token.symbol}
+                {user.followersCount ?? 'N/A'}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {token.chain}
+                {user.followingCount ?? 'N/A'}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {formatNumber(token.v24hUSD)}
-              </td>
-              <td
-                style={{
-                  padding: '6px 4px',
-                  borderBottom: '1px solid #eee',
-                  color:
-                    token.v24hChangePercent > 0
-                      ? '#16a34a'
-                      : token.v24hChangePercent < 0
-                        ? '#dc2626'
-                        : undefined,
-                }}
-              >
-                {token.v24hChangePercent !== null &&
-                token.v24hChangePercent !== undefined
-                  ? token.v24hChangePercent.toFixed(2) + '%'
-                  : 'N/A'}
+                {user.tweetCount ?? 'N/A'}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {formatNumber(token.mc)}
+                {user.likeCount ?? 'N/A'}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {formatNumber(token.liquidity)}
+                {user.smartFollowingCount ?? 'N/A'}
               </td>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {formatDate(token.lastTradeUnixTime)}
+                {user.averageEngagement ?? 'N/A'}
+              </td>
+              <td
+                style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
+              >
+                {user.followerEngagementRatio ?? 'N/A'}
+              </td>
+              <td
+                style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
+              >
+                <button
+                  style={{
+                    color: '#dc2626',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                  title="Delete user"
+                  disabled={deletingId === user.id}
+                  onClick={() => handleDelete(user.id)}
+                >
+                  {deletingId === user.id ? 'Deleting...' : 'Delete'}
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div
-        style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}
-      >
-        <button
-          onClick={onNextPage}
-          style={{
-            padding: '6px 18px',
-            borderRadius: 6,
-            background: '#0070f3',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
+      {onNextPage && (
+        <div
+          style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}
         >
-          Next
-        </button>
-      </div>
+          <button
+            onClick={onNextPage}
+            style={{
+              padding: '6px 18px',
+              borderRadius: 6,
+              background: '#0070f3',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
-  );
-}
-
-function TokenLogo({ logoURI, symbol }: { logoURI: string; symbol: string }) {
-  const [error, setError] = useState(false);
-  if (!logoURI || error) {
-    // Fallback: colored circle with symbol or a generic icon
-    return (
-      <div
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: 12,
-          background: '#e5e7eb',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 13,
-          color: '#555',
-          fontWeight: 600,
-        }}
-        title={symbol}
-      >
-        {symbol?.slice(0, 3).toUpperCase() || '❓'}
-      </div>
-    );
-  }
-  return (
-    <img
-      src={logoURI}
-      alt={symbol}
-      style={{ width: 24, height: 24, borderRadius: 12, objectFit: 'cover' }}
-      onError={() => setError(true)}
-    />
   );
 }

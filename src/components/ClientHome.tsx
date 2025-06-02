@@ -63,8 +63,6 @@ export default function ClientHome({
         users={users}
         sortKey={String(sortKey)}
         direction={String(direction)}
-        filterKey={undefined}
-        filterValue={undefined}
         searchParams={safeSearchParams}
       />
     </div>

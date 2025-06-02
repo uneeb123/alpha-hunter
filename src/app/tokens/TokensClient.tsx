@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import TokensTable from '@/components/UserTable';
+import TokensTable from '@/components/TokensTable';
 import FilterForm from '@/components/FilterForm';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
