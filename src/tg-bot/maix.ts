@@ -12,6 +12,7 @@ import { recentNftMintsHandler } from './handler/recentNftMintsHandler';
 import { catchHandler } from './handler/catchHandler';
 import { settingsHandler } from './handler/settingsHandler';
 import { marketOverviewHandler } from './handler/marketOverviewHandler';
+import { internetCapitalMarketsHandler } from './handler/internetCapitalMarketsHandler';
 
 export class Maix {
   private bot: Telegraf;
@@ -29,6 +30,7 @@ export class Maix {
     macroUpdatesHandler(this.bot, deps);
     getMemeDetailsHandler(this.bot, deps);
     recentNftMintsHandler(this.bot, deps);
+    internetCapitalMarketsHandler(this.bot, deps);
     catchHandler(this.bot, deps);
   }
 

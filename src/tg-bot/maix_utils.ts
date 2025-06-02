@@ -8,6 +8,12 @@ export function getOptionsKeyboard() {
   return Markup.inlineKeyboard([
     [Markup.button.callback('Market Overview 📊', 'market_overview')],
     [Markup.button.callback('Macro Updates 🗞️', 'macro_updates')],
+    // [
+    //   Markup.button.callback(
+    //     'Internet Capital Markets 💹',
+    //     'internet_capital_markets',
+    //   ),
+    // ],
     [Markup.button.callback('Recent NFT Mints 🖼️', 'recent_nft_mints')],
     [Markup.button.callback('Search Memecoin 🔎', 'get_meme_details')],
   ]);
