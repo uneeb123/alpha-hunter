@@ -62,3 +62,112 @@ export async function getTrendingMemecoins(): Promise<BirdeyeTokenInfo[]> {
 
   return allTokens.slice(0, 10);
 }
+
+export interface BirdeyeTokenListItem {
+  address: string;
+  decimals: number;
+  price: number;
+  lastTradeUnixTime: number;
+  liquidity: number;
+  logoURI: string;
+  mc: number;
+  name: string;
+  symbol: string;
+  v24hChangePercent: number;
+  v24hUSD: number;
+  chain: string;
+}
+
+export interface BirdeyeTokenListResponse {
+  success: boolean;
+  data: {
+    updateUnixTime: number;
+    updateTime: string;
+    tokens: BirdeyeTokenListItem[];
+    total: number;
+  };
+}
+
+export type BirdeyeTokenListParams = {
+  chain: 'solana' | 'base' | 'sui';
+  offset?: number;
+  limit?: number;
+  sort_by?: 'v24hUSD' | 'mc' | 'v24hChangePercent' | 'liquidity';
+  sort_type?: 'asc' | 'desc';
+  min_liquidity?: number;
+  max_liquidity?: number;
+};
+
+export async function getBirdeyeTokenList(
+  params: BirdeyeTokenListParams,
+): Promise<BirdeyeTokenListResponse> {
+  const secrets = getSecrets();
+  const url = 'https://public-api.birdeye.so/defi/tokenlist';
+  const {
+    chain,
+    offset = 0,
+    limit = 20,
+    sort_by = 'v24hUSD',
+    sort_type = 'desc',
+    min_liquidity,
+    max_liquidity,
+  } = params;
+  const query: Record<string, any> = {
+    offset,
+    limit,
+    sort_by,
+    sort_type,
+  };
+  if (min_liquidity !== undefined) query.min_liquidity = min_liquidity;
+  if (max_liquidity !== undefined) query.max_liquidity = max_liquidity;
+
+  const response = await axios.get(url, {
+    headers: {
+      'X-API-KEY': secrets.birdeyeApiKey,
+      accept: 'application/json',
+      'x-chain': chain,
+    },
+    params: query,
+  });
+  // Add chain to each token
+  if (response.data?.data?.tokens) {
+    response.data.data.tokens = response.data.data.tokens.map((t: any) => ({
+      ...t,
+      chain,
+    }));
+  }
+  return response.data;
+}
+
+export async function getBirdeyeTokenListMultiChain(
+  params: Omit<BirdeyeTokenListParams, 'chain'> & {
+    chains: BirdeyeTokenListParams['chain'][];
+  },
+): Promise<BirdeyeTokenListResponse> {
+  const { chains, ...rest } = params;
+  const allTokens: BirdeyeTokenListItem[] = [];
+  let updateUnixTime = 0;
+  let updateTime = '';
+  let total = 0;
+  for (const chain of chains) {
+    const resp = await getBirdeyeTokenList({ ...rest, chain });
+    if (resp.success && resp.data?.tokens) {
+      allTokens.push(...resp.data.tokens.map((t) => ({ ...t, chain })));
+      updateUnixTime = Math.max(updateUnixTime, resp.data.updateUnixTime);
+      if (!updateTime || resp.data.updateTime > updateTime)
+        updateTime = resp.data.updateTime;
+      total += resp.data.total;
+    }
+  }
+  // Optionally deduplicate by address+chain
+  // Optionally sort/limit here if needed
+  return {
+    success: true,
+    data: {
+      updateUnixTime,
+      updateTime,
+      tokens: allTokens,
+      total,
+    },
+  };
+}
