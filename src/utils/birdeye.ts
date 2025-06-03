@@ -116,14 +116,14 @@ export async function getTrendingMemecoins(): Promise<BirdeyeTokenInfo[]> {
 export interface BirdeyeTokenListItem {
   address: string;
   decimals: number;
-  price: number;
+  price: number | null;
   lastTradeUnixTime: number;
   liquidity: number;
-  logoURI: string;
-  mc: number;
+  logoURI: string | null;
+  mc: number | null;
   name: string;
   symbol: string;
-  v24hChangePercent: number;
+  v24hChangePercent: number | null;
   v24hUSD: number;
   chain: string;
 }

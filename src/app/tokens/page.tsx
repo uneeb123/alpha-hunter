@@ -4,8 +4,6 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-const CHAINS = ['solana', 'base', 'sui'] as const;
-
 type SearchParams = Record<string, string>;
 
 type Filter = { key: string; value: number };
@@ -43,7 +41,7 @@ export default async function TokensPage({
   const chain =
     params?.chain === 'all' || !params?.chain
       ? 'all'
-      : (params?.chain as (typeof CHAINS)[number]);
+      : (params?.chain as string);
   const offset = Number(params?.offset) || 0;
   const limit = 20;
   const filters = parseFilters(params);

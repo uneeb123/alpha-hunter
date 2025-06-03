@@ -56,7 +56,7 @@ export default function TokensClient({
   const minMarketCap = filters.find((f) => f.key === 'min_market_cap')?.value;
   const filteredTokens =
     minMarketCap !== undefined
-      ? tokens.filter((t) => t.mc >= minMarketCap)
+      ? tokens.filter((t) => t.mc !== null && t.mc >= minMarketCap)
       : tokens;
 
   function handleChainChange(e: React.ChangeEvent<HTMLSelectElement>) {
