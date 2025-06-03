@@ -38,10 +38,6 @@ export default async function TokensPage({
 
   const sortKey = (params?.sortKey as string) || 'v24hUSD';
   const direction = (params?.direction as 'asc' | 'desc') || 'desc';
-  const chain =
-    params?.chain === 'all' || !params?.chain
-      ? 'all'
-      : (params?.chain as string);
   const offset = Number(params?.offset) || 0;
   const limit = 20;
   const filters = parseFilters(params);
@@ -49,8 +45,7 @@ export default async function TokensPage({
   const max_liquidity = filters.find((f) => f.key === 'max_liquidity')?.value;
 
   // Build Prisma query filters
-  const where: any = {};
-  if (chain !== 'all') where.chain = chain;
+  const where: any = { chain: 'solana' };
   if (min_liquidity !== undefined) where.liquidity = { gte: min_liquidity };
   if (max_liquidity !== undefined) {
     where.liquidity = where.liquidity
@@ -77,7 +72,7 @@ export default async function TokensPage({
       limit={limit}
       sortKey={String(sortKey)}
       direction={String(direction)}
-      chain={chain}
+      chain={'solana'}
       filters={filters}
       searchParams={params}
     />

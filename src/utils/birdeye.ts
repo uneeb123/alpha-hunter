@@ -5,14 +5,10 @@ let totalRequests = 0;
 let first429At: number | null = null;
 let firstRequestTime: number | null = null;
 
-const FIXED_DELAY_MS = 1000; // 1 request per second
-
 async function axiosWith429Retry(config: any, maxRetries = 5, baseDelay = 500) {
   let attempt = 0;
   while (true) {
     try {
-      // Fixed delay before every request
-      await new Promise((res) => setTimeout(res, FIXED_DELAY_MS));
       totalRequests++;
       if (totalRequests === 1) {
         firstRequestTime = Date.now();
@@ -222,4 +218,76 @@ export async function getBirdeyeTokenListMultiChain(
       total,
     },
   };
+}
+
+export interface BirdeyeV3TokenListItem {
+  address: string;
+  logo_uri: string | null;
+  name: string;
+  symbol: string;
+  decimals: number;
+  extensions?: Record<string, any>;
+  market_cap: number;
+  fdv: number | null;
+  liquidity: number;
+  last_trade_unix_time: number;
+  volume_1h_usd: number;
+  volume_1h_change_percent: number;
+  volume_2h_usd: number;
+  volume_2h_change_percent: number;
+  volume_4h_usd: number;
+  volume_4h_change_percent: number;
+  volume_8h_usd: number;
+  volume_8h_change_percent: number;
+  volume_24h_usd: number;
+  volume_24h_change_percent: number;
+  trade_1h_count: number;
+  trade_2h_count: number;
+  trade_4h_count: number;
+  trade_8h_count: number;
+  trade_24h_count: number;
+  price: number;
+  price_change_1h_percent: number;
+  price_change_2h_percent: number;
+  price_change_4h_percent: number;
+  price_change_8h_percent: number;
+  price_change_24h_percent: number;
+  holder: number;
+  recent_listing_time: number | null;
+}
+
+export interface BirdeyeV3TokenListResponse {
+  success: boolean;
+  data: {
+    items: BirdeyeV3TokenListItem[];
+    has_next: boolean;
+  };
+}
+
+export async function getBirdeyeV3TokenList({
+  offset = 0,
+  limit = 50,
+}: {
+  offset?: number;
+  limit?: number;
+}): Promise<BirdeyeV3TokenListResponse> {
+  const secrets = getSecrets();
+  const url = 'https://public-api.birdeye.so/defi/v3/token/list';
+  const response = await axiosWith429Retry({
+    method: 'get',
+    url,
+    headers: {
+      'X-API-KEY': secrets.birdeyeApiKey,
+      accept: 'application/json',
+      'x-chain': 'solana',
+    },
+    params: {
+      chain: 'solana',
+      sort_by: 'liquidity',
+      sort_type: 'desc',
+      offset,
+      limit,
+    },
+  });
+  return response.data;
 }

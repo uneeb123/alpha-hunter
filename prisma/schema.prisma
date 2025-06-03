@@ -147,20 +147,24 @@ model TelegramChat {
 }
 
 model Token {
-  id                Int      @id @default(autoincrement())
-  address           String
-  decimals          Int
-  price             Float?
-  lastTradeUnixTime Int
-  liquidity         Float
-  logoURI           String?
-  mc                Float?
-  name              String
-  symbol            String
-  v24hChangePercent Float?
-  v24hUSD           Float
-  chain             String
-  updatedAt         DateTime @updatedAt
+  id                    Int      @id @default(autoincrement())
+  address               String
+  decimals              Int
+  price                 Float?
+  lastTradeUnixTime     Int
+  liquidity             Float
+  logoURI               String?
+  mc                    Float?
+  name                  String
+  symbol                String
+  v24hChangePercent     Float?
+  v24hUSD               Float
+  chain                 String
+  updatedAt             DateTime @updatedAt
+  trade24hCount         Int
+  holderCount           Int
+  fullyDilutedValuation Float?
 
   @@unique([address, chain])
+  @@index([address])
 }

@@ -1,82 +1,80 @@
 import { NextResponse } from 'next/server';
-import { getBirdeyeTokenList } from '@/utils/birdeye';
+import { getBirdeyeV3TokenList } from '@/utils/birdeye';
 import { prisma } from '@/lib/prisma';
 
-const CHAINS = ['solana', 'base', 'sui'] as const;
 const LIMIT = 50;
 
 export async function POST() {
   try {
     let allTokensLength = 0;
-    for (const chain of CHAINS) {
-      let offset = 10050;
-      let total = null;
-      do {
-        let response;
-        try {
-          response = await getBirdeyeTokenList({
-            chain,
-            offset,
-            limit: LIMIT,
-          });
-        } catch (apiError: any) {
-          console.log(
-            `[Birdeye API ERROR] chain=${chain} offset=${offset}:`,
-            apiError?.message || String(apiError) || 'Unknown error',
-          );
-          throw new Error(
-            `Birdeye API error for chain=${chain} offset=${offset}`,
-          );
-        }
-        const tokens = response.data.tokens;
-        total = response.data.total;
-        allTokensLength += tokens.length;
+    let offset = 0;
+    let hasNext = true;
+    while (hasNext) {
+      let response;
+      try {
+        response = await getBirdeyeV3TokenList({
+          offset,
+          limit: LIMIT,
+        });
+      } catch (apiError: any) {
         console.log(
-          `[${chain}] Upserting tokens for offset ${offset} / ${total}`,
+          `[Birdeye V3 API ERROR] offset=${offset}:`,
+          apiError?.message || String(apiError) || 'Unknown error',
         );
-        for (const token of tokens) {
-          try {
-            await prisma.token.upsert({
-              where: {
-                address_chain: { address: token.address, chain: token.chain },
-              },
-              update: {
-                decimals: token.decimals,
-                price: token.price,
-                lastTradeUnixTime: token.lastTradeUnixTime,
-                liquidity: token.liquidity,
-                logoURI: token.logoURI,
-                mc: token.mc,
-                name: token.name,
-                symbol: token.symbol,
-                v24hChangePercent: token.v24hChangePercent,
-                v24hUSD: token.v24hUSD,
-              },
-              create: {
-                address: token.address,
-                chain: token.chain,
-                decimals: token.decimals,
-                price: token.price,
-                lastTradeUnixTime: token.lastTradeUnixTime,
-                liquidity: token.liquidity,
-                logoURI: token.logoURI,
-                mc: token.mc,
-                name: token.name,
-                symbol: token.symbol,
-                v24hChangePercent: token.v24hChangePercent,
-                v24hUSD: token.v24hUSD,
-              },
-            });
-          } catch (dbError: any) {
-            console.log(
-              `[DB UPSERT ERROR] chain=${chain} offset=${offset} token=${token.address}:`,
-              dbError?.message || String(dbError) || 'Unknown error',
-            );
-            // Do NOT throw, just continue
-          }
+        throw new Error(`Birdeye V3 API error for offset=${offset}`);
+      }
+      const tokens = response.data.items;
+      hasNext = response.data.has_next;
+      allTokensLength += tokens.length;
+      console.log(`[solana] Upserting tokens for offset ${offset}`);
+      for (const token of tokens) {
+        try {
+          await prisma.token.upsert({
+            where: {
+              address_chain: { address: token.address, chain: 'solana' },
+            },
+            update: {
+              decimals: token.decimals,
+              price: token.price,
+              lastTradeUnixTime: token.last_trade_unix_time,
+              liquidity: token.liquidity,
+              logoURI: token.logo_uri,
+              mc: token.market_cap,
+              name: token.name,
+              symbol: token.symbol,
+              v24hChangePercent: token.volume_24h_change_percent,
+              v24hUSD: token.volume_24h_usd,
+              trade24hCount: token.trade_24h_count,
+              holderCount: token.holder,
+              fullyDilutedValuation: token.fdv,
+            },
+            create: {
+              address: token.address,
+              chain: 'solana',
+              decimals: token.decimals,
+              price: token.price,
+              lastTradeUnixTime: token.last_trade_unix_time,
+              liquidity: token.liquidity,
+              logoURI: token.logo_uri,
+              mc: token.market_cap,
+              name: token.name,
+              symbol: token.symbol,
+              v24hChangePercent: token.volume_24h_change_percent,
+              v24hUSD: token.volume_24h_usd,
+              trade24hCount: token.trade_24h_count,
+              holderCount: token.holder,
+              fullyDilutedValuation: token.fdv,
+            },
+          });
+        } catch (dbError: any) {
+          console.log(
+            `[DB UPSERT ERROR] offset=${offset} token=${token.address}:`,
+            dbError?.message || String(dbError) || 'Unknown error',
+          );
+          // Do NOT throw, just continue
         }
-        offset += LIMIT;
-      } while (offset < total);
+      }
+      offset += LIMIT;
     }
 
     return NextResponse.json({ success: true, count: allTokensLength });
