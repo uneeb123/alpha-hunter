@@ -35,6 +35,10 @@ curl -X GET https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api
 start - Initiates the bot
 settings - Manage your subscription and customize your preferences
 
+## Populate database manually with Token info
+
+curl -X POST http://localhost:3000/api/update-tokens
+
 # Scripts
 
 ## Management

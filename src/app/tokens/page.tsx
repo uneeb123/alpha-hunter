@@ -1,10 +1,6 @@
 import React from 'react';
 import TokensClient from './TokensClient';
-import {
-  getBirdeyeTokenList,
-  getBirdeyeTokenListMultiChain,
-  BirdeyeTokenListItem,
-} from '@/utils/birdeye';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +38,7 @@ export default async function TokensPage({
       ? await searchParams
       : (searchParams ?? {});
 
-  const sortKey = (params?.sortKey as keyof BirdeyeTokenListItem) || 'v24hUSD';
+  const sortKey = (params?.sortKey as string) || 'v24hUSD';
   const direction = (params?.direction as 'asc' | 'desc') || 'desc';
   const chain =
     params?.chain === 'all' || !params?.chain
@@ -54,33 +50,26 @@ export default async function TokensPage({
   const min_liquidity = filters.find((f) => f.key === 'min_liquidity')?.value;
   const max_liquidity = filters.find((f) => f.key === 'max_liquidity')?.value;
 
-  let tokens: BirdeyeTokenListItem[] = [];
-  let total = 0;
-  if (chain === 'all') {
-    const response = await getBirdeyeTokenListMultiChain({
-      chains: [...CHAINS],
-      offset,
-      limit,
-      sort_by: sortKey as any,
-      sort_type: direction,
-      min_liquidity,
-      max_liquidity,
-    });
-    tokens = response.data.tokens;
-    total = response.data.total;
-  } else {
-    const response = await getBirdeyeTokenList({
-      chain,
-      offset,
-      limit,
-      sort_by: sortKey as any,
-      sort_type: direction,
-      min_liquidity,
-      max_liquidity,
-    });
-    tokens = response.data.tokens;
-    total = response.data.total;
+  // Build Prisma query filters
+  const where: any = {};
+  if (chain !== 'all') where.chain = chain;
+  if (min_liquidity !== undefined) where.liquidity = { gte: min_liquidity };
+  if (max_liquidity !== undefined) {
+    where.liquidity = where.liquidity
+      ? { ...where.liquidity, lte: max_liquidity }
+      : { lte: max_liquidity };
   }
+
+  // Fetch tokens and total count from the database
+  const [tokens, total] = await Promise.all([
+    prisma.token.findMany({
+      where,
+      orderBy: { [sortKey]: direction },
+      skip: offset,
+      take: limit,
+    }),
+    prisma.token.count({ where }),
+  ]);
 
   return (
     <TokensClient

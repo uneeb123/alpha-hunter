@@ -145,3 +145,22 @@ model TelegramChat {
 
   @@index([chatId])
 }
+
+model Token {
+  id                Int      @id @default(autoincrement())
+  address           String
+  decimals          Int
+  price             Float?
+  lastTradeUnixTime Int
+  liquidity         Float
+  logoURI           String?
+  mc                Float?
+  name              String
+  symbol            String
+  v24hChangePercent Float?
+  v24hUSD           Float
+  chain             String
+  updatedAt         DateTime @updatedAt
+
+  @@unique([address, chain])
+}

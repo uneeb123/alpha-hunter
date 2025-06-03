@@ -1,6 +1,54 @@
 import axios from 'axios';
 import { getSecrets } from './secrets';
 
+let totalRequests = 0;
+let first429At: number | null = null;
+let firstRequestTime: number | null = null;
+
+const FIXED_DELAY_MS = 1000; // 1 request per second
+
+async function axiosWith429Retry(config: any, maxRetries = 5, baseDelay = 500) {
+  let attempt = 0;
+  while (true) {
+    try {
+      // Fixed delay before every request
+      await new Promise((res) => setTimeout(res, FIXED_DELAY_MS));
+      totalRequests++;
+      if (totalRequests === 1) {
+        firstRequestTime = Date.now();
+      }
+      console.log(
+        `[Birdeye] Sending request #${totalRequests} to ${config.url} (attempt ${attempt + 1})`,
+      );
+      return await axios(config);
+    } catch (error: any) {
+      if (
+        error.response &&
+        error.response.status === 429 &&
+        attempt < maxRetries
+      ) {
+        if (first429At === null) {
+          first429At = totalRequests;
+          const elapsed = firstRequestTime
+            ? ((Date.now() - firstRequestTime) / 1000).toFixed(2)
+            : 'unknown';
+          console.warn(
+            `[Birdeye] First 429 received after ${first429At} requests and ${elapsed} seconds.`,
+          );
+        }
+        const delay = baseDelay * Math.pow(2, attempt); // exponential backoff
+        console.warn(
+          `[Birdeye] 429 received for ${config.url} (attempt ${attempt + 1}). Retrying after ${delay}ms...`,
+        );
+        await new Promise((res) => setTimeout(res, delay));
+        attempt++;
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 export interface BirdeyeTokenInfo {
   name: string;
   symbol: string;
@@ -19,7 +67,9 @@ export async function getTrendingMemecoins(): Promise<BirdeyeTokenInfo[]> {
 
   for (const chain of chains) {
     try {
-      const response = await axios.get(url, {
+      const response = await axiosWith429Retry({
+        method: 'get',
+        url,
         headers: {
           'X-API-KEY': secrets.birdeyeApiKey,
           accept: 'application/json',
@@ -121,7 +171,9 @@ export async function getBirdeyeTokenList(
   if (min_liquidity !== undefined) query.min_liquidity = min_liquidity;
   if (max_liquidity !== undefined) query.max_liquidity = max_liquidity;
 
-  const response = await axios.get(url, {
+  const response = await axiosWith429Retry({
+    method: 'get',
+    url,
     headers: {
       'X-API-KEY': secrets.birdeyeApiKey,
       accept: 'application/json',

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Token" ALTER COLUMN "mc" DROP NOT NULL;
