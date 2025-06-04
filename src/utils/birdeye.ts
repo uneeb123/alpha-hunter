@@ -309,3 +309,27 @@ export async function getBirdeyeTokenOverview(address: string): Promise<any> {
   }
   return response.data.data;
 }
+
+export async function getBirdeyeTokenCreationInfo(
+  address: string,
+): Promise<any | null> {
+  const secrets = getSecrets();
+  const url = 'https://public-api.birdeye.so/defi/token_creation_info';
+  try {
+    const response = await axiosWith429Retry({
+      method: 'get',
+      url,
+      headers: {
+        'X-API-KEY': secrets.birdeyeApiKey,
+        accept: 'application/json',
+        'x-chain': 'solana',
+      },
+      params: { address },
+    });
+    // If data is null, return null
+    return response.data?.data || null;
+  } catch {
+    // Optionally log or handle error
+    return null;
+  }
+}

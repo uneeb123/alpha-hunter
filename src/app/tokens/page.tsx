@@ -76,6 +76,7 @@ export default async function TokensPage({
         chain: true,
         updatedAt: true,
         fullyDilutedValuation: true,
+        creationTime: true,
       },
     }),
     prisma.token.count({ where }),

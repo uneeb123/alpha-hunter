@@ -7,7 +7,7 @@ import { BirdeyeTokenListItem } from '@/utils/birdeye';
 type Filter = { key: string; value: number };
 
 type TokensClientProps = {
-  tokens: BirdeyeTokenListItem[];
+  tokens: (BirdeyeTokenListItem & { creationTime?: Date | null })[];
   total: number;
   offset: number;
   limit: number;
@@ -154,6 +154,7 @@ export default function TokensClient({
         onNextPage={() => {
           window.location.href = getNextPageUrl();
         }}
+        showCreatedAt={true}
       />
       <div style={{ marginTop: 12, color: '#888', fontSize: 13 }}>
         Showing {offset + 1}-{Math.min(offset + limit, total)} of {total} tokens

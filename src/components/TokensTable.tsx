@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
 type TokensTableProps = {
-  tokens: BirdeyeTokenListItem[];
+  tokens: (BirdeyeTokenListItem & { creationTime?: Date | null })[];
   sortKey: string;
   direction: string;
   searchParams?: Record<string, string>;
   onNextPage: () => void;
+  showCreatedAt?: boolean;
 };
 
 const columns = [
@@ -18,7 +19,7 @@ const columns = [
   { key: 'v24hChangePercent', label: '24h Change (%)' },
   { key: 'mc', label: 'Market Cap' },
   { key: 'liquidity', label: 'Liquidity' },
-  { key: 'lastTradeUnixTime', label: 'Last Trade' },
+  { key: 'createdAt', label: 'Created At' },
   { key: 'updatedAt', label: 'Last Updated At' },
   { key: 'copy', label: '' },
 ];
@@ -44,11 +45,6 @@ function formatNumber(n: number | null | undefined, digits = 2) {
   return `$${n.toFixed(digits)}`;
 }
 
-function formatDate(unix: number) {
-  const d = new Date(unix * 1000);
-  return d.toLocaleString();
-}
-
 function formatDateTime(date: Date | string | number | null | undefined) {
   if (!date) return 'N/A';
   const d = new Date(date);
@@ -70,7 +66,7 @@ function RefreshButton({
     setLoading(true);
     setSuccess(false);
     try {
-      const resp = await fetch('/api/get-token', {
+      const resp = await fetch('/api/refresh-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address }),
@@ -120,6 +116,7 @@ export default function TokensTable({
   direction,
   searchParams,
   onNextPage,
+  showCreatedAt,
 }: TokensTableProps) {
   const [rows, setRows] = React.useState(tokens);
   React.useEffect(() => {
@@ -149,44 +146,46 @@ export default function TokensTable({
       >
         <thead>
           <tr>
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                style={{
-                  borderBottom: '1px solid #ccc',
-                  padding: '8px 4px',
-                  textAlign: 'left',
-                  cursor: [
-                    'v24hUSD',
-                    'mc',
-                    'v24hChangePercent',
-                    'liquidity',
-                  ].includes(col.key)
-                    ? 'pointer'
-                    : 'default',
-                  background: '#fafafa',
-                  width: col.key === 'logo' ? 32 : undefined,
-                }}
-              >
-                {['v24hUSD', 'mc', 'v24hChangePercent', 'liquidity'].includes(
-                  col.key,
-                ) ? (
-                  <a
-                    href={getSortUrl(col.key)}
-                    style={{ color: 'inherit', textDecoration: 'none' }}
-                  >
-                    {col.label}
-                    {sortKey === col.key
-                      ? direction === 'asc'
-                        ? ' ▲'
-                        : ' ▼'
-                      : ''}
-                  </a>
-                ) : (
-                  col.label
-                )}
-              </th>
-            ))}
+            {columns
+              .filter((col) => showCreatedAt || col.key !== 'createdAt')
+              .map((col) => (
+                <th
+                  key={col.key}
+                  style={{
+                    borderBottom: '1px solid #ccc',
+                    padding: '8px 4px',
+                    textAlign: 'left',
+                    cursor: [
+                      'v24hUSD',
+                      'mc',
+                      'v24hChangePercent',
+                      'liquidity',
+                    ].includes(col.key)
+                      ? 'pointer'
+                      : 'default',
+                    background: '#fafafa',
+                    width: col.key === 'logo' ? 32 : undefined,
+                  }}
+                >
+                  {['v24hUSD', 'mc', 'v24hChangePercent', 'liquidity'].includes(
+                    col.key,
+                  ) ? (
+                    <a
+                      href={getSortUrl(col.key)}
+                      style={{ color: 'inherit', textDecoration: 'none' }}
+                    >
+                      {col.label}
+                      {sortKey === col.key
+                        ? direction === 'asc'
+                          ? ' ▲'
+                          : ' ▼'
+                        : ''}
+                    </a>
+                  ) : (
+                    col.label
+                  )}
+                </th>
+              ))}
           </tr>
         </thead>
         <tbody>
@@ -247,11 +246,13 @@ export default function TokensTable({
               >
                 {formatNumber(token.liquidity)}
               </td>
-              <td
-                style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
-              >
-                {formatDate(token.lastTradeUnixTime)}
-              </td>
+              {showCreatedAt ? (
+                <td
+                  style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
+                >
+                  {formatDateTime(token.creationTime)}
+                </td>
+              ) : null}
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
