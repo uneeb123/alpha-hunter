@@ -60,6 +60,23 @@ export default async function TokensPage({
       orderBy: { [sortKey]: direction },
       skip: offset,
       take: limit,
+      select: {
+        id: true,
+        address: true,
+        decimals: true,
+        price: true,
+        lastTradeUnixTime: true,
+        liquidity: true,
+        logoURI: true,
+        mc: true,
+        name: true,
+        symbol: true,
+        v24hChangePercent: true,
+        v24hUSD: true,
+        chain: true,
+        updatedAt: true,
+        fullyDilutedValuation: true,
+      },
     }),
     prisma.token.count({ where }),
   ]);
@@ -72,7 +89,6 @@ export default async function TokensPage({
       limit={limit}
       sortKey={String(sortKey)}
       direction={String(direction)}
-      chain={'solana'}
       filters={filters}
       searchParams={params}
     />

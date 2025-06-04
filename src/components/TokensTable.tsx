@@ -7,7 +7,6 @@ type TokensTableProps = {
   direction: string;
   searchParams?: Record<string, string>;
   onNextPage: () => void;
-  chain: string;
 };
 
 const columns = [
@@ -15,12 +14,12 @@ const columns = [
   { key: 'logo', label: '' },
   { key: 'name', label: 'Name' },
   { key: 'symbol', label: 'Symbol' },
-  { key: 'chain', label: 'Chain' },
   { key: 'v24hUSD', label: '24h Volume (USD)' },
   { key: 'v24hChangePercent', label: '24h Change (%)' },
   { key: 'mc', label: 'Market Cap' },
   { key: 'liquidity', label: 'Liquidity' },
   { key: 'lastTradeUnixTime', label: 'Last Trade' },
+  { key: 'updatedAt', label: 'Last Updated At' },
   { key: 'copy', label: '' },
 ];
 
@@ -50,20 +49,96 @@ function formatDate(unix: number) {
   return d.toLocaleString();
 }
 
+function formatDateTime(date: Date | string | number | null | undefined) {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'N/A';
+  return d.toLocaleString();
+}
+
+function RefreshButton({
+  address,
+  onRefresh,
+}: {
+  address: string;
+  onRefresh: (updated: any) => void;
+}) {
+  const [loading, setLoading] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    setSuccess(false);
+    try {
+      const resp = await fetch('/api/get-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address }),
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setSuccess(true);
+        onRefresh(data.token);
+        setTimeout(() => setSuccess(false), 1200);
+      } else {
+        console.log(data.error || 'Failed to refresh');
+      }
+    } catch (e: any) {
+      console.log(e?.message || 'Failed to refresh');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleRefresh}
+      disabled={loading}
+      style={{
+        padding: '4px 10px',
+        borderRadius: 4,
+        background: success ? '#16a34a' : '#f2f2f2',
+        color: success ? '#fff' : '#222',
+        border: 'none',
+        fontWeight: 500,
+        cursor: loading ? 'not-allowed' : 'pointer',
+        fontSize: 13,
+        minWidth: 70,
+        marginLeft: 6,
+        transition: 'background 0.2s',
+      }}
+      title={address}
+    >
+      {loading ? 'Refreshing...' : success ? 'Refreshed!' : 'Refresh'}
+    </button>
+  );
+}
+
 export default function TokensTable({
   tokens,
   sortKey,
   direction,
   searchParams,
   onNextPage,
-  chain,
 }: TokensTableProps) {
+  const [rows, setRows] = React.useState(tokens);
+  React.useEffect(() => {
+    setRows(tokens);
+  }, [tokens]);
+
+  const handleRefreshRow = (address: string, updated: any) => {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.address === address ? { ...row, ...updated } : row,
+      ),
+    );
+  };
+
   function getSortUrl(key: string) {
     const dir = sortKey === key && direction === 'desc' ? 'asc' : 'desc';
     const params = new URLSearchParams(safeSearchParams(searchParams));
     params.set('sortKey', key);
     params.set('direction', dir);
-    params.set('chain', chain);
     return `?${params.toString()}`;
   }
 
@@ -115,7 +190,7 @@ export default function TokensTable({
           </tr>
         </thead>
         <tbody>
-          {tokens.map((token, idx) => (
+          {rows.map((token, idx) => (
             <tr key={token.address}>
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
@@ -140,11 +215,6 @@ export default function TokensTable({
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                {token.chain}
-              </td>
-              <td
-                style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
-              >
                 {formatNumber(token.v24hUSD)}
               </td>
               <td
@@ -152,11 +222,14 @@ export default function TokensTable({
                   padding: '6px 4px',
                   borderBottom: '1px solid #eee',
                   color:
-                    token.v24hChangePercent > 0
-                      ? '#16a34a'
-                      : token.v24hChangePercent < 0
-                        ? '#dc2626'
-                        : undefined,
+                    token.v24hChangePercent !== null &&
+                    token.v24hChangePercent !== undefined
+                      ? token.v24hChangePercent > 0
+                        ? '#16a34a'
+                        : token.v24hChangePercent < 0
+                          ? '#dc2626'
+                          : undefined
+                      : undefined,
                 }}
               >
                 {token.v24hChangePercent !== null &&
@@ -182,7 +255,27 @@ export default function TokensTable({
               <td
                 style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
               >
-                <CopyAddressButton address={token.address} />
+                {formatDateTime(token.updatedAt)}
+              </td>
+              <td
+                style={{ padding: '6px 4px', borderBottom: '1px solid #eee' }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 6,
+                    alignItems: 'center',
+                  }}
+                >
+                  <CopyAddressButton address={token.address} />
+                  <RefreshButton
+                    address={token.address}
+                    onRefresh={(updated) =>
+                      handleRefreshRow(token.address, updated)
+                    }
+                  />
+                </div>
               </td>
             </tr>
           ))}
@@ -210,7 +303,13 @@ export default function TokensTable({
   );
 }
 
-function TokenLogo({ logoURI, symbol }: { logoURI: string; symbol: string }) {
+function TokenLogo({
+  logoURI,
+  symbol,
+}: {
+  logoURI: string | null;
+  symbol: string;
+}) {
   const [error, setError] = useState(false);
   if (!logoURI || error) {
     // Fallback: colored circle with symbol or a generic icon

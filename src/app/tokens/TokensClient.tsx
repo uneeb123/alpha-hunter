@@ -4,13 +4,6 @@ import TokensTable from '@/components/TokensTable';
 import FilterForm from '@/components/FilterForm';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
-const CHAIN_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'solana', label: 'Solana' },
-  { value: 'base', label: 'Base' },
-  { value: 'sui', label: 'Sui' },
-];
-
 type Filter = { key: string; value: number };
 
 type TokensClientProps = {
@@ -20,7 +13,6 @@ type TokensClientProps = {
   limit: number;
   sortKey: string;
   direction: string;
-  chain: string;
   filters: Filter[];
   searchParams: Record<string, string>;
 };
@@ -32,7 +24,6 @@ export default function TokensClient({
   limit,
   sortKey,
   direction,
-  chain,
   filters,
   searchParams,
 }: TokensClientProps) {
@@ -40,7 +31,6 @@ export default function TokensClient({
     const paramsObj = {
       ...searchParams,
       offset: String(offset + limit),
-      chain,
     };
     const search = new URLSearchParams(paramsObj).toString();
     return `?${search}`;
@@ -59,14 +49,6 @@ export default function TokensClient({
       ? tokens.filter((t) => t.mc !== null && t.mc >= minMarketCap)
       : tokens;
 
-  function handleChainChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newChain = e.target.value;
-    const params = new URLSearchParams({ ...searchParams, chain: newChain });
-    // Reset offset when changing chain
-    params.set('offset', '0');
-    window.location.search = params.toString();
-  }
-
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 
@@ -74,7 +56,6 @@ export default function TokensClient({
     const paramsObj = {
       ...searchParams,
       offset: String((page - 1) * limit),
-      chain,
     };
     const search = new URLSearchParams(paramsObj).toString();
     return `?${search}`;
@@ -158,31 +139,7 @@ export default function TokensClient({
 
   return (
     <div style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>
-      <h1 style={{ fontSize: 24, marginBottom: 24 }}>Tokens</h1>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
-        <label htmlFor="chain-select" style={{ fontWeight: 500 }}>
-          Chain:
-        </label>
-        <select
-          id="chain-select"
-          value={chain || 'all'}
-          onChange={handleChainChange}
-          style={{ padding: '6px 12px', borderRadius: 6, fontSize: 15 }}
-        >
-          {CHAIN_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <h1 style={{ fontSize: 24, marginBottom: 24 }}>Solana Tokens</h1>
       <FilterForm
         metricColumns={metricColumns}
         filters={filters}
@@ -197,7 +154,6 @@ export default function TokensClient({
         onNextPage={() => {
           window.location.href = getNextPageUrl();
         }}
-        chain={chain}
       />
       <div style={{ marginTop: 12, color: '#888', fontSize: 13 }}>
         Showing {offset + 1}-{Math.min(offset + limit, total)} of {total} tokens

@@ -122,6 +122,7 @@ export interface BirdeyeTokenListItem {
   v24hChangePercent: number | null;
   v24hUSD: number;
   chain: string;
+  updatedAt: Date;
 }
 
 export interface BirdeyeTokenListResponse {
@@ -290,4 +291,21 @@ export async function getBirdeyeV3TokenList({
     },
   });
   return response.data;
+}
+
+export async function getBirdeyeTokenOverview(address: string): Promise<any> {
+  const secrets = getSecrets();
+  const birdeyeApiKey = secrets.birdeyeApiKey;
+  const birdeyeUrl = `https://public-api.birdeye.so/defi/token_overview?address=${address}&frames=24h`;
+  const response = await axios.get(birdeyeUrl, {
+    headers: {
+      'X-API-KEY': birdeyeApiKey,
+      accept: 'application/json',
+      'x-chain': 'solana',
+    },
+  });
+  if (!response.data?.data) {
+    throw new Error('No data from Birdeye');
+  }
+  return response.data.data;
 }
