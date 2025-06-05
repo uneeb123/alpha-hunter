@@ -3,6 +3,10 @@
     {
       "path": "/api/maix/broadcast",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/schedule-refresh-token",
+      "schedule": "* * * * *"
     }
   ]
 }
