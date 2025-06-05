@@ -12,6 +12,7 @@ export async function GET() {
   });
 
   const batchSize = 100;
+  const rpsLimit = 15;
   const addresses: string[] = [];
 
   for (let i = 0; i < batchSize; i++) {
@@ -25,12 +26,14 @@ export async function GET() {
     return NextResponse.json({ error: 'queue empty' }, { status: 204 });
   }
 
-  // Enqueue all jobs in parallel
+  const now = Date.now();
+
   await Promise.all(
-    addresses.map((address) =>
+    addresses.map((address, i) =>
       qstash.publishJSON({
         url: `https://${secrets.productionUrl}/api/refresh-token`,
         body: { address },
+        notBefore: now + Math.floor(i / rpsLimit) * 1000,
       }),
     ),
   );
