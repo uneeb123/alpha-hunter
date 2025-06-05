@@ -4,8 +4,6 @@ import TokensTable from '@/components/TokensTable';
 import FilterForm from '@/components/FilterForm';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
-type Filter = { key: string; value: number | string };
-
 type TokensClientProps = {
   tokens: (BirdeyeTokenListItem & { creationTime?: Date | null })[];
   total: number;
