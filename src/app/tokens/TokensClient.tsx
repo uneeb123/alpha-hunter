@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import TokensTable from '@/components/TokensTable';
-import FilterForm from '@/components/FilterForm';
+import TokensFilterForm from '@/components/TokensFilterForm';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
 type TokensClientProps = {
@@ -146,7 +146,7 @@ export default function TokensClient({
   return (
     <div style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>
       <h1 style={{ fontSize: 24, marginBottom: 24 }}>Solana Tokens</h1>
-      <FilterForm
+      <TokensFilterForm
         metricColumns={metricColumns}
         filters={filters}
         sortKey={String(sortKey)}

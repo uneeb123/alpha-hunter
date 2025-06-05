@@ -4,21 +4,30 @@ import React, { useState } from 'react';
 type MetricColumn = { key: string; label: string };
 type Filter = { key: string; value: number | string | undefined };
 
-type FilterFormProps = {
+type TokensFilterFormProps = {
   metricColumns: MetricColumn[];
   filters: Filter[];
   sortKey: string;
   direction: string;
 };
 
-export default function FilterForm({
+export default function TokensFilterForm({
   metricColumns,
   filters,
   sortKey,
   direction,
-}: FilterFormProps) {
+}: TokensFilterFormProps) {
+  // Add state for createdAt filter (date string)
+  const createdAtFilter = filters.find((f) => f.key === 'createdAt');
+  const [createdAt, setCreatedAt] = useState<string>(
+    createdAtFilter && typeof createdAtFilter.value === 'string'
+      ? createdAtFilter.value
+      : '',
+  );
   const [rows, setRows] = useState<Filter[]>(
-    filters.length ? filters : [{ key: '', value: undefined }],
+    filters.length
+      ? filters.filter((f) => f.key !== 'createdAt')
+      : [{ key: '', value: undefined }],
   );
 
   function handleChange(i: number, field: 'key' | 'value', value: string) {
@@ -43,10 +52,17 @@ export default function FilterForm({
     e.preventDefault();
     const params = new URLSearchParams();
     let filterIdx = 0;
+    // Add createdAt filter if set
+    if (createdAt) {
+      params.set(`filterKey${filterIdx}`, 'createdAt');
+      params.set(`filterValue${filterIdx}`, createdAt);
+      filterIdx++;
+    }
     rows.forEach((row) => {
       if (
         row.key &&
         row.value !== undefined &&
+        row.key !== 'createdAt' &&
         typeof row.value !== 'string' &&
         !isNaN(Number(row.value))
       ) {
@@ -75,6 +91,31 @@ export default function FilterForm({
         marginBottom: 16,
       }}
     >
+      {/* Date picker for createdAt filter */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <label htmlFor="createdAt-date">Created After:</label>
+        <input
+          id="createdAt-date"
+          type="date"
+          value={createdAt ? createdAt.slice(0, 10) : ''}
+          onChange={(e) => {
+            setCreatedAt(
+              e.target.value ? new Date(e.target.value).toISOString() : '',
+            );
+          }}
+          style={{ padding: 4 }}
+        />
+        {createdAt && (
+          <button
+            type="button"
+            onClick={() => setCreatedAt('')}
+            style={{ color: '#e74c3c', fontSize: 12 }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {/* Existing metric filters */}
       {rows.map((row, i) => (
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <label htmlFor={`filterKey${i}`}>Filter by:</label>
@@ -99,6 +140,7 @@ export default function FilterForm({
             value={row.value ?? ''}
             onChange={(e) => handleChange(i, 'value', e.target.value)}
             style={{ padding: 4, width: 100 }}
+            disabled={row.key === 'createdAt'}
           />
           {rows.length > 1 && (
             <button
@@ -121,7 +163,7 @@ export default function FilterForm({
       <button type="submit" style={{ padding: '4px 12px', marginTop: 8 }}>
         Apply
       </button>
-      {rows.some((r) => r.key && r.value !== undefined) && (
+      {(rows.some((r) => r.key && r.value !== undefined) || createdAt) && (
         <button
           type="button"
           onClick={handleClear}
