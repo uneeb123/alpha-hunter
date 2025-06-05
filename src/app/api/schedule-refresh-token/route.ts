@@ -26,14 +26,14 @@ export async function GET() {
     return NextResponse.json({ error: 'queue empty' }, { status: 204 });
   }
 
-  const now = Date.now();
+  const now = Math.floor(Date.now() / 1000); // seconds
 
   await Promise.all(
     addresses.map((address, i) =>
       qstash.publishJSON({
         url: `https://${secrets.productionUrl}/api/refresh-token`,
         body: { address },
-        notBefore: now + Math.floor(i / rpsLimit) * 1000,
+        notBefore: now + Math.floor(i / rpsLimit), // seconds
       }),
     ),
   );
