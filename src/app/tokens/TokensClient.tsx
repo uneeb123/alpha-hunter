@@ -4,7 +4,7 @@ import TokensTable from '@/components/TokensTable';
 import FilterForm from '@/components/FilterForm';
 import { BirdeyeTokenListItem } from '@/utils/birdeye';
 
-type Filter = { key: string; value: number };
+type Filter = { key: string; value: number | string };
 
 type TokensClientProps = {
   tokens: (BirdeyeTokenListItem & { creationTime?: Date | null })[];
@@ -13,7 +13,7 @@ type TokensClientProps = {
   limit: number;
   sortKey: string;
   direction: string;
-  filters: Filter[];
+  filters: { key: string; value: number | string }[];
   searchParams: Record<string, string>;
 };
 
@@ -43,7 +43,15 @@ export default function TokensClient({
   ];
 
   // Apply client-side min_market_cap filter
-  const minMarketCap = filters.find((f) => f.key === 'min_market_cap')?.value;
+  const minMarketCapRaw = filters.find(
+    (f) => f.key === 'min_market_cap',
+  )?.value;
+  const minMarketCap =
+    typeof minMarketCapRaw === 'number'
+      ? minMarketCapRaw
+      : typeof minMarketCapRaw === 'string' && !isNaN(Number(minMarketCapRaw))
+        ? Number(minMarketCapRaw)
+        : undefined;
   const filteredTokens =
     minMarketCap !== undefined
       ? tokens.filter((t) => t.mc !== null && t.mc >= minMarketCap)

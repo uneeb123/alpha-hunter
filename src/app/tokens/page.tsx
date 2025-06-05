@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 type SearchParams = Record<string, string>;
 
-type Filter = { key: string; value: number };
+type Filter = { key: string; value: number | string };
 
 function parseFilters(searchParams: SearchParams | undefined): Filter[] {
   if (!searchParams) return [];
@@ -16,9 +16,14 @@ function parseFilters(searchParams: SearchParams | undefined): Filter[] {
     const key = searchParams[`filterKey${i}`];
     const value = searchParams[`filterValue${i}`];
     if (!key || value === undefined) break;
-    const num = Number(value);
-    if (key && !isNaN(num)) {
-      filters.push({ key, value: num });
+    // Accept string for createdAt, number for others
+    if (key === 'createdAt') {
+      filters.push({ key, value });
+    } else {
+      const num = Number(value);
+      if (key && !isNaN(num)) {
+        filters.push({ key, value: num });
+      }
     }
     i++;
   }
@@ -43,6 +48,9 @@ export default async function TokensPage({
   const filters = parseFilters(params);
   const min_liquidity = filters.find((f) => f.key === 'min_liquidity')?.value;
   const max_liquidity = filters.find((f) => f.key === 'max_liquidity')?.value;
+  const created_after = filters.find((f) => f.key === 'createdAt')?.value as
+    | string
+    | undefined;
 
   // Build Prisma query filters
   const where: any = { chain: 'solana' };
@@ -51,6 +59,12 @@ export default async function TokensPage({
     where.liquidity = where.liquidity
       ? { ...where.liquidity, lte: max_liquidity }
       : { lte: max_liquidity };
+  }
+  if (created_after) {
+    where.creationTime = {
+      ...(where.creationTime || {}),
+      gte: new Date(created_after),
+    };
   }
 
   // Fetch tokens and total count from the database
