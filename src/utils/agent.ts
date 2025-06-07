@@ -6,7 +6,7 @@ import {
 } from '@langchain/core/messages';
 import { ToolNode } from '@langchain/langgraph/prebuilt';
 import { StateGraph, MessagesAnnotation } from '@langchain/langgraph';
-import { tools } from '@/workflow/chatbot/tools';
+import { tools } from '@/utils/tools';
 
 export class ChatAgent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +62,7 @@ export class ChatAgent {
         messages: [
           ...prevState.messages,
           new SystemMessage(
-            "You are an AI assistant named Max. Always be concise and direct in your responses. \
+            "You are an AI assistant named Maix. Always be concise and direct in your responses. \
 Avoid unnecessary explanations or verbosity. Give responses as plain text. \
 Be hella casual. Write in lowercaps. Don't give response as Markdown",
           ),

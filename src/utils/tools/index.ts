@@ -25,19 +25,3 @@ export const tools = [
   getHolderData,
   getMomentum,
 ];
-
-// Currently no difference
-export const agentSmithTools = [
-  new TavilySearchResults({ maxResults: 3 }),
-  getYieldInfo,
-  searchTweetsForTicker,
-  getTopTweets,
-  getTrendingTokens,
-  getNewlyCreatedTokens,
-  getRiskAssessment,
-  getBalance,
-  buyToken,
-  sellToken,
-  getHolderData,
-  getMomentum,
-];

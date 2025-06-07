@@ -2,6 +2,7 @@ import { Telegraf, Context } from 'telegraf';
 import { getOptionsKeyboard, replyWithGrokResult } from '../maix_utils';
 import { getMemecoinDetails } from '../grok_workflow';
 import { message } from 'telegraf/filters';
+import { ChatAgent } from '@/utils/agent';
 
 interface TextHandlerDeps {
   debug: any;
@@ -35,6 +36,13 @@ export function textHandler(bot: Telegraf, dependencies: TextHandlerDeps) {
       });
       return;
     }
-    // Add custom logic for Maix here
+
+    // be able to have conversations with the chat agent
+    const agent = new ChatAgent();
+    const response = await agent.generateReply(
+      ctx.message.text,
+      ctx.chat.id.toString(),
+    );
+    ctx.reply(response);
   });
 }
