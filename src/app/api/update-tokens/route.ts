@@ -20,6 +20,8 @@ export async function POST() {
         response = await getBirdeyeV3TokenList({
           offset,
           limit: LIMIT,
+          sort_by: 'liquidity',
+          sort_type: 'desc',
         });
       } catch (apiError: any) {
         debug.error(

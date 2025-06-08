@@ -1,0 +1,46 @@
+-- CreateTable
+CREATE TABLE "Filter" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "sort_by" TEXT NOT NULL,
+    "sort_type" TEXT NOT NULL,
+    "min_liquidity" DOUBLE PRECISION,
+    "max_liquidity" DOUBLE PRECISION,
+    "min_market_cap" DOUBLE PRECISION,
+    "max_market_cap" DOUBLE PRECISION,
+    "min_fdv" DOUBLE PRECISION,
+    "max_fdv" DOUBLE PRECISION,
+    "min_recent_listing_time" INTEGER,
+    "max_recent_listing_time" INTEGER,
+    "min_last_trade_unix_time" INTEGER,
+    "max_last_trade_unix_time" INTEGER,
+    "min_holder" INTEGER,
+    "min_volume_1h_usd" DOUBLE PRECISION,
+    "min_volume_2h_usd" DOUBLE PRECISION,
+    "min_volume_4h_usd" DOUBLE PRECISION,
+    "min_volume_8h_usd" DOUBLE PRECISION,
+    "min_volume_24h_usd" DOUBLE PRECISION,
+    "min_volume_1h_change_percent" DOUBLE PRECISION,
+    "min_volume_2h_change_percent" DOUBLE PRECISION,
+    "min_volume_4h_change_percent" DOUBLE PRECISION,
+    "min_volume_8h_change_percent" DOUBLE PRECISION,
+    "min_volume_24h_change_percent" DOUBLE PRECISION,
+    "min_price_change_1h_percent" DOUBLE PRECISION,
+    "min_price_change_2h_percent" DOUBLE PRECISION,
+    "min_price_change_4h_percent" DOUBLE PRECISION,
+    "min_price_change_8h_percent" DOUBLE PRECISION,
+    "min_price_change_24h_percent" DOUBLE PRECISION,
+    "min_trade_1h_count" INTEGER,
+    "min_trade_2h_count" INTEGER,
+    "min_trade_4h_count" INTEGER,
+    "min_trade_8h_count" INTEGER,
+    "min_trade_24h_count" INTEGER,
+    "chain" TEXT DEFAULT 'solana',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Filter_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Filter_name_key" ON "Filter"("name");

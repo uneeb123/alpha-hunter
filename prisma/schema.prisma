@@ -169,3 +169,45 @@ model Token {
   @@unique([address, chain])
   @@index([address])
 }
+
+/// Stores filter parameters for Birdeye alert API
+model Filter {
+  id                            Int      @id @default(autoincrement())
+  name                          String   @unique
+  sort_by                       String
+  sort_type                     String
+  min_liquidity                 Float?
+  max_liquidity                 Float?
+  min_market_cap                Float?
+  max_market_cap                Float?
+  min_fdv                       Float?
+  max_fdv                       Float?
+  min_recent_listing_time       Int?
+  max_recent_listing_time       Int?
+  min_last_trade_unix_time      Int?
+  max_last_trade_unix_time      Int?
+  min_holder                    Int?
+  min_volume_1h_usd             Float?
+  min_volume_2h_usd             Float?
+  min_volume_4h_usd             Float?
+  min_volume_8h_usd             Float?
+  min_volume_24h_usd            Float?
+  min_volume_1h_change_percent  Float?
+  min_volume_2h_change_percent  Float?
+  min_volume_4h_change_percent  Float?
+  min_volume_8h_change_percent  Float?
+  min_volume_24h_change_percent Float?
+  min_price_change_1h_percent   Float?
+  min_price_change_2h_percent   Float?
+  min_price_change_4h_percent   Float?
+  min_price_change_8h_percent   Float?
+  min_price_change_24h_percent  Float?
+  min_trade_1h_count            Int?
+  min_trade_2h_count            Int?
+  min_trade_4h_count            Int?
+  min_trade_8h_count            Int?
+  min_trade_24h_count           Int?
+  chain                         String?  @default("solana")
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+}

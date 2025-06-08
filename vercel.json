@@ -5,8 +5,8 @@
       "schedule": "0 17 * * *"
     },
     {
-      "path": "/api/schedule-refresh-token",
-      "schedule": "* * * * *"
+      "path": "/api/alert",
+      "schedule": "0 * * * *"
     }
   ]
 }

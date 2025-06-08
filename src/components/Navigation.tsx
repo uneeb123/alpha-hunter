@@ -52,6 +52,15 @@ export default function Navigation() {
         >
           User Metrics
         </Link>
+        <Link
+          href="/filter-alert"
+          style={{
+            textDecoration: pathname === '/filter-alert' ? 'underline' : 'none',
+            color: '#0070f3',
+          }}
+        >
+          Filter Alert
+        </Link>
       </div>
     </nav>
   );

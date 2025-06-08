@@ -114,6 +114,38 @@ export class Maix {
       return false;
     }
   }
+
+  public async alert(message: string) {
+    try {
+      const chats = await prisma.telegramChat.findMany({
+        where: { subscribed: true },
+      });
+      await Promise.all(
+        chats.map(async (chat) => {
+          try {
+            await this.bot.telegram.sendMessage(chat.chatId, message, {
+              parse_mode: 'Markdown',
+              disable_web_page_preview: true,
+            } as any);
+          } catch (error) {
+            this.debug.error(
+              `Failed to send alert to chat ${chat.chatId}:`,
+              error as Error,
+            );
+            if ((error as any)?.response?.error_code === 403) {
+              await prisma.telegramChat.delete({
+                where: { chatId: chat.chatId },
+              });
+            }
+          }
+        }),
+      );
+      return true;
+    } catch (error) {
+      this.debug.error('Error broadcasting alert:', error as Error);
+      return false;
+    }
+  }
 }
 
 let maix: Maix | undefined;

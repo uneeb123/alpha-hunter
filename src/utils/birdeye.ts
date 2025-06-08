@@ -265,30 +265,68 @@ export interface BirdeyeV3TokenListResponse {
   };
 }
 
-export async function getBirdeyeV3TokenList({
-  offset = 0,
-  limit = 50,
-}: {
+/**
+ * Params for Birdeye V3 Token List API
+ *
+ * sort_by: Required. Allowed values:
+ *   'market_cap' | 'fdv' | 'liquidity' | 'last_trade_unix_time' | 'volume_1h_usd' | 'volume_1h_change_percent' | 'volume_2h_usd' | 'volume_2h_change_percent' | 'volume_4h_usd' | 'volume_4h_change_percent' | 'volume_8h_usd' | 'volume_8h_change_percent' | 'volume_24h_usd' | 'volume_24h_change_percent' | 'trade_1h_count' | 'trade_2h_count' | 'trade_4h_count' | 'trade_8h_count' | 'trade_24h_count' | 'price_change_1h_percent' | 'price_change_2h_percent' | 'price_change_4h_percent' | 'price_change_8h_percent' | 'price_change_24h_percent' | 'holder' | 'recent_listing_time'
+ * sort_type: Required. 'asc' | 'desc'
+ */
+export interface BirdeyeV3TokenListParams {
+  sort_by: string; // required
+  sort_type: 'asc' | 'desc'; // required
+  min_liquidity?: number;
+  max_liquidity?: number;
+  min_market_cap?: number;
+  max_market_cap?: number;
+  min_fdv?: number;
+  max_fdv?: number;
+  min_recent_listing_time?: number;
+  max_recent_listing_time?: number;
+  min_last_trade_unix_time?: number;
+  max_last_trade_unix_time?: number;
+  min_holder?: number;
+  min_volume_1h_usd?: number;
+  min_volume_2h_usd?: number;
+  min_volume_4h_usd?: number;
+  min_volume_8h_usd?: number;
+  min_volume_24h_usd?: number;
+  min_volume_1h_change_percent?: number;
+  min_volume_2h_change_percent?: number;
+  min_volume_4h_change_percent?: number;
+  min_volume_8h_change_percent?: number;
+  min_volume_24h_change_percent?: number;
+  min_price_change_1h_percent?: number;
+  min_price_change_2h_percent?: number;
+  min_price_change_4h_percent?: number;
+  min_price_change_8h_percent?: number;
+  min_price_change_24h_percent?: number;
+  min_trade_1h_count?: number;
+  min_trade_2h_count?: number;
+  min_trade_4h_count?: number;
+  min_trade_8h_count?: number;
+  min_trade_24h_count?: number;
   offset?: number;
   limit?: number;
-}): Promise<BirdeyeV3TokenListResponse> {
+  chain?: string;
+}
+
+export async function getBirdeyeV3TokenList(
+  params: BirdeyeV3TokenListParams,
+): Promise<BirdeyeV3TokenListResponse> {
   const secrets = getSecrets();
   const url = 'https://public-api.birdeye.so/defi/v3/token/list';
+  const query: Record<string, any> = { ...params };
+  if (!query.chain) query.chain = 'solana';
   const response = await axiosWith429Retry({
     method: 'get',
     url,
     headers: {
       'X-API-KEY': secrets.birdeyeApiKey,
       accept: 'application/json',
-      'x-chain': 'solana',
+      'x-chain': query.chain,
     },
-    params: {
-      chain: 'solana',
-      sort_by: 'liquidity',
-      sort_type: 'desc',
-      offset,
-      limit,
-    },
+    params: query,
   });
   return response.data;
 }
