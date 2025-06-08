@@ -107,6 +107,31 @@ const sortByOptions = [
 ];
 const sortTypeOptions = ['asc', 'desc'];
 
+function sanitizeFilterData(
+  data: Record<string, any>,
+  floatFields: string[],
+  intFields: string[],
+) {
+  const sanitized: Record<string, any> = { ...data };
+  for (const key of floatFields) {
+    if (sanitized[key] === '') {
+      sanitized[key] = null;
+    } else if (sanitized[key] !== null && sanitized[key] !== undefined) {
+      sanitized[key] = parseFloat(sanitized[key]);
+      if (isNaN(sanitized[key])) sanitized[key] = null;
+    }
+  }
+  for (const key of intFields) {
+    if (sanitized[key] === '') {
+      sanitized[key] = null;
+    } else if (sanitized[key] !== null && sanitized[key] !== undefined) {
+      sanitized[key] = parseInt(sanitized[key], 10);
+      if (isNaN(sanitized[key])) sanitized[key] = null;
+    }
+  }
+  return sanitized;
+}
+
 export default function FilterAlertPage() {
   const [form, setForm] = useState<FilterFormState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -135,10 +160,47 @@ export default function FilterAlertPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!form) return;
     setLoading(true);
     setSuccess(false);
     try {
-      await axios.post('/api/filter', { ...form, name: FILTER_NAME });
+      const floatFields = [
+        'min_liquidity',
+        'max_liquidity',
+        'min_market_cap',
+        'max_market_cap',
+        'min_fdv',
+        'max_fdv',
+        'min_volume_1h_usd',
+        'min_volume_2h_usd',
+        'min_volume_4h_usd',
+        'min_volume_8h_usd',
+        'min_volume_24h_usd',
+        'min_volume_1h_change_percent',
+        'min_volume_2h_change_percent',
+        'min_volume_4h_change_percent',
+        'min_volume_8h_change_percent',
+        'min_volume_24h_change_percent',
+        'min_price_change_1h_percent',
+        'min_price_change_2h_percent',
+        'min_price_change_4h_percent',
+        'min_price_change_8h_percent',
+        'min_price_change_24h_percent',
+      ];
+      const intFields = [
+        'min_recent_listing_time',
+        'max_recent_listing_time',
+        'min_last_trade_unix_time',
+        'max_last_trade_unix_time',
+        'min_holder',
+        'min_trade_1h_count',
+        'min_trade_2h_count',
+        'min_trade_4h_count',
+        'min_trade_8h_count',
+        'min_trade_24h_count',
+      ];
+      const sanitizedForm = sanitizeFilterData(form, floatFields, intFields);
+      await axios.post('/api/filter', { ...sanitizedForm, name: FILTER_NAME });
       setSuccess(true);
     } finally {
       setLoading(false);
