@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       );
     }
     const client = getMaix();
-    const formattedMessage = `_System Alert 🚨: ${message}_`;
+    const formattedMessage = `_ 🚨 System Alert: ${message}_`;
     const success = await client.alert(formattedMessage);
     if (success) {
       return NextResponse.json({ success: true });

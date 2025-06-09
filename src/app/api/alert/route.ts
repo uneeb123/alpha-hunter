@@ -5,6 +5,7 @@ import {
   getBirdeyeTokenCreationInfo,
   formatNumber,
   formatDateWithOrdinal,
+  getBirdeyeTokenOverview,
 } from '@/utils/birdeye';
 import { Debugger } from '@/utils/debugger';
 import { getMaix } from '@/tg-bot/maix';
@@ -117,7 +118,24 @@ export async function GET() {
         if (!creationTime || creationTime < threeMonthsAgo) {
           continue;
         }
-        const message = `📈 *Trending Token!*\nName: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}`;
+        // Fetch token overview for description and twitter
+        let overview;
+        try {
+          overview = await getBirdeyeTokenOverview(token.address);
+        } catch {
+          overview = null;
+        }
+        let description = '';
+        let twitter = '';
+        if (overview && overview.extensions) {
+          if (overview.extensions.description) {
+            description = `\nDescription: ${overview.extensions.description}`;
+          }
+          if (overview.extensions.twitter) {
+            twitter = `\n[Twitter/X](${overview.extensions.twitter})`;
+          }
+        }
+        const message = `📈 *Trending Token!*\nName: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}${description}${twitter}`;
         await getMaix().alert(message);
         debug.info(`Alerted for token: ${token.name} (${token.symbol})`);
         alertedTokens++;
