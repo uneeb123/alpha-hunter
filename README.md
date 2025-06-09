@@ -16,11 +16,12 @@ curl -X POST https://e664-2601-646-300-5e0-b974-eee8-c8c9-d14c.ngrok-free.app/ap
 
 ## Setting up Maix locally
 
-Make sure to replace PRODUCTION_URL in Environment Variables
-
 curl -X POST https://admin.singularitylabs.co/api/maix/delete-webhook
-curl -X POST https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api/maix/set-webhook
-curl -X POST https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api/maix/delete-webhook
+ngrok http 3000
+Make sure to replace PRODUCTION_URL in Environment Variables
+pnpm dev
+curl -X POST https://2ccb-2600-1700-14be-86df-5859-5984-1c0b-c262.ngrok-free.app/api/maix/set-webhook
+curl -X POST https://2ccb-2600-1700-14be-86df-5859-5984-1c0b-c262.ngrok-free.app/api/maix/delete-webhook
 curl -X POST https://admin.singularitylabs.co/api/maix/set-webhook
 
 ## Manually broadcast
