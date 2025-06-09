@@ -371,3 +371,38 @@ export async function getBirdeyeTokenCreationInfo(
     return null;
   }
 }
+
+/**
+ * Formats a number with K, M, B suffixes (e.g., $119B, $2.5M, $800K).
+ * Returns 'N/A' if input is null, undefined, or NaN.
+ */
+export function formatNumber(n: number | null | undefined, digits = 2): string {
+  if (n === null || n === undefined || isNaN(n)) return 'N/A';
+  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(digits)}B`;
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(digits)}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(digits)}K`;
+  return `$${n.toFixed(digits)}`;
+}
+
+/**
+ * Formats a Date as '9th June 2026' with ordinal suffix for the day.
+ * Returns 'N/A' if input is invalid.
+ */
+export function formatDateWithOrdinal(
+  date: Date | string | number | null | undefined,
+): string {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'N/A';
+  const day = d.getDate();
+  const month = d.toLocaleString('en-US', { month: 'long' });
+  const year = d.getFullYear();
+  // Ordinal suffix logic
+  const j = day % 10,
+    k = day % 100;
+  let suffix = 'th';
+  if (j === 1 && k !== 11) suffix = 'st';
+  else if (j === 2 && k !== 12) suffix = 'nd';
+  else if (j === 3 && k !== 13) suffix = 'rd';
+  return `${day}${suffix} ${month} ${year}`;
+}

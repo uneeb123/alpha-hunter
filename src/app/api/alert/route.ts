@@ -3,6 +3,8 @@ import {
   getBirdeyeV3TokenList,
   BirdeyeV3TokenListParams,
   getBirdeyeTokenCreationInfo,
+  formatNumber,
+  formatDateWithOrdinal,
 } from '@/utils/birdeye';
 import { Debugger } from '@/utils/debugger';
 import { getMaix } from '@/tg-bot/maix';
@@ -115,7 +117,7 @@ export async function GET() {
         if (!creationTime || creationTime < threeMonthsAgo) {
           continue;
         }
-        const message = `🚨 *Token Alert!*\nName: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: $${token.market_cap.toLocaleString()}\nAddress: \`${token.address}\`\nCreated: ${creationTime.toLocaleDateString()}`;
+        const message = `📈 *Trending Token!*\nName: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}`;
         await getMaix().alert(message);
         debug.info(`Alerted for token: ${token.name} (${token.symbol})`);
         alertedTokens++;
