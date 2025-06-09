@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client';
 const debug = Debugger.getInstance();
 const prisma = new PrismaClient();
 
-export async function POST() {
+export async function GET() {
   try {
     let alertedTokens = 0;
     let response;
