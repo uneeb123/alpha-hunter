@@ -61,6 +61,15 @@ export default function Navigation() {
         >
           Filter Alert
         </Link>
+        <Link
+          href="/broadcast"
+          style={{
+            textDecoration: pathname === '/broadcast' ? 'underline' : 'none',
+            color: '#0070f3',
+          }}
+        >
+          Broadcast
+        </Link>
       </div>
     </nav>
   );
