@@ -5,3 +5,4 @@
 - For ORM, we use Prisma
 - All secrets are managed in src/utils/secrets.ts, don't use environment variables directly
 - For logging, use the Debugger found in utils folder instead of console.log
+- Type definitions should go in src/types/ folder

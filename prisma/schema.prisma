@@ -211,3 +211,15 @@ model Filter {
   createdAt                     DateTime @default(now())
   updatedAt                     DateTime @updatedAt
 }
+
+model TokenAlertMemory {
+  id           Int      @id @default(autoincrement())
+  tokenAddress String
+  eventType    String // e.g., "new_alert", "update_alert"
+  marketCap    Float
+  createdAt    DateTime @default(now())
+  extra        Json? // for any additional info (description, etc.)
+
+  @@index([tokenAddress])
+  @@index([createdAt])
+}

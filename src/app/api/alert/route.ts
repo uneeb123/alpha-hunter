@@ -135,8 +135,23 @@ export async function GET() {
             twitter = `\n[Twitter/X](${overview.extensions.twitter})`;
           }
         }
-        const message = `📈 *Trending Token!*\nName: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}${description}${twitter}`;
-        await getMaix().alert(message);
+        const { ChatAgent } = await import('@/utils/agent');
+        const agent = new ChatAgent();
+        const llmMessage = await agent.generateAlert({
+          name: token.name,
+          symbol: token.symbol,
+          marketCap: token.market_cap,
+          address: token.address,
+          created: creationTime?.toISOString() || '',
+          description: overview?.extensions?.description || '',
+        });
+
+        const originalMessage = `Name: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}${description}${twitter}`;
+
+        const finalMessage = llmMessage
+          ? `📈 *Trending Token!*\n${llmMessage}\n${originalMessage}`
+          : `📈 *Trending Token!*\n${originalMessage}`;
+        await getMaix().alert(finalMessage);
         debug.info(`Alerted for token: ${token.name} (${token.symbol})`);
         alertedTokens++;
       } catch (err) {
