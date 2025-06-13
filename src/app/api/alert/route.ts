@@ -9,16 +9,89 @@ import {
 } from '@/utils/birdeye';
 import { Debugger } from '@/utils/debugger';
 import { getMaix } from '@/tg-bot/maix';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 const debug = Debugger.getInstance();
-const prisma = new PrismaClient();
+
+// Alert thresholds and cooldowns
+const ALERT_THRESHOLDS = {
+  MARKET_CAP_CHANGE: 20, // 20% change in market cap
+  VOLUME_CHANGE: 50, // 50% change in volume
+  MIN_MARKET_CAP: 100000, // $100k minimum market cap
+  MIN_VOLUME: 50000, // $50k minimum volume
+};
+const ALERT_COOLDOWNS = {
+  NEW_TOKEN: 24, // hours
+  MARKET_CAP: 24, // hours
+  VOLUME: 12, // hours
+};
+
+interface AlertCheckResult {
+  shouldAlert: boolean;
+  type?: 'new_token' | 'market_cap_change' | 'volume_spike';
+  change?: number;
+}
+
+async function shouldAlertToken(
+  token: any,
+  lastAlert: any,
+): Promise<AlertCheckResult> {
+  const now = new Date();
+  let creationTime = token.creationTime
+    ? new Date(token.creationTime)
+    : undefined;
+  if (!creationTime && token.blockHumanTime) {
+    creationTime = new Date(token.blockHumanTime);
+  }
+  // New token: created in last 24h
+  const isNewToken =
+    creationTime &&
+    now.getTime() - creationTime.getTime() < 24 * 60 * 60 * 1000;
+  if (
+    isNewToken &&
+    (!lastAlert ||
+      now.getTime() - new Date(lastAlert.createdAt).getTime() >
+        ALERT_COOLDOWNS.NEW_TOKEN * 60 * 60 * 1000)
+  ) {
+    return { shouldAlert: true, type: 'new_token' };
+  }
+  // Market cap change
+  if (lastAlert && lastAlert.marketCap > 0) {
+    const marketCapChange =
+      ((token.market_cap - lastAlert.marketCap) / lastAlert.marketCap) * 100;
+    if (
+      Math.abs(marketCapChange) >= ALERT_THRESHOLDS.MARKET_CAP_CHANGE &&
+      now.getTime() - new Date(lastAlert.createdAt).getTime() >
+        ALERT_COOLDOWNS.MARKET_CAP * 60 * 60 * 1000
+    ) {
+      return {
+        shouldAlert: true,
+        type: 'market_cap_change',
+        change: marketCapChange,
+      };
+    }
+  }
+  // Volume spike
+  if (lastAlert && lastAlert.extra && lastAlert.extra.volume) {
+    const volumeChange =
+      ((token.volume_24h_usd - lastAlert.extra.volume) /
+        lastAlert.extra.volume) *
+      100;
+    if (
+      volumeChange >= ALERT_THRESHOLDS.VOLUME_CHANGE &&
+      now.getTime() - new Date(lastAlert.createdAt).getTime() >
+        ALERT_COOLDOWNS.VOLUME * 60 * 60 * 1000
+    ) {
+      return { shouldAlert: true, type: 'volume_spike', change: volumeChange };
+    }
+  }
+  return { shouldAlert: false };
+}
 
 export async function GET() {
   try {
     let alertedTokens = 0;
     let response;
-    // Fetch filter values from DB
     let filter;
     try {
       filter = await prisma.filter.findUnique({ where: { name: 'alert1' } });
@@ -108,36 +181,90 @@ export async function GET() {
     );
     for (const token of tokens) {
       try {
-        // Fetch creation info from Birdeye
-        const creationInfo = await getBirdeyeTokenCreationInfo(token.address);
-        let creationTime: Date | undefined = undefined;
+        // Skip if below minimum thresholds
+        if (
+          token.market_cap < ALERT_THRESHOLDS.MIN_MARKET_CAP ||
+          token.volume_24h_usd < ALERT_THRESHOLDS.MIN_VOLUME
+        ) {
+          continue;
+        }
+        // Fetch creation info
+        let creationInfo;
+        try {
+          creationInfo = await getBirdeyeTokenCreationInfo(token.address);
+        } catch {
+          creationInfo = null;
+        }
+        let creationTime = undefined;
         if (creationInfo && creationInfo.blockHumanTime) {
           creationTime = new Date(creationInfo.blockHumanTime);
         }
-        // Filter: only proceed if creationTime is within last 3 months
+        // Only proceed if creationTime is within last 3 months
         if (!creationTime || creationTime < threeMonthsAgo) {
           continue;
         }
-        // Fetch token overview for description and twitter
+        // Fetch overview
         let overview;
         try {
           overview = await getBirdeyeTokenOverview(token.address);
         } catch {
           overview = null;
         }
-        let description = '';
-        let twitter = '';
+        // Get last alert for this token
+        const lastAlert = await prisma.tokenAlertMemory.findFirst({
+          where: { tokenAddress: token.address },
+          orderBy: { createdAt: 'desc' },
+        });
+        // Check if we should alert
+        const alertCheck = await shouldAlertToken(
+          {
+            ...token,
+            creationTime,
+          },
+          lastAlert,
+        );
+        if (!alertCheck.shouldAlert) {
+          continue;
+        }
+        // Prepare alert message
+        let message = '';
+        switch (alertCheck.type) {
+          case 'new_token':
+            message = `🆕 *New Token Alert!*\n`;
+            break;
+          case 'market_cap_change':
+            message = `📈 *Market Cap Change Alert!*\nChange: ${(alertCheck.change ?? 0).toFixed(2)}%\n`;
+            break;
+          case 'volume_spike':
+            message = `📊 *Volume Spike Alert!*\nChange: ${(alertCheck.change ?? 0).toFixed(2)}%\n`;
+            break;
+        }
+        message += `Name: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}`;
         if (overview && overview.extensions) {
           if (overview.extensions.description) {
-            description = `\nDescription: ${overview.extensions.description}`;
+            message += `\nDescription: ${overview.extensions.description}`;
           }
           if (overview.extensions.twitter) {
-            twitter = `\n[Twitter/X](${overview.extensions.twitter})`;
+            message += `\n[Twitter/X](${overview.extensions.twitter})`;
           }
         }
-        const message = `📈 *Trending Token!*\nName: ${token.name}\nSymbol: ${token.symbol}\nMarket Cap: ${formatNumber(token.market_cap, 0)}\nAddress: \`${token.address}\`\nCreated: ${formatDateWithOrdinal(creationTime)}${description}${twitter}`;
         await getMaix().alert(message);
-        debug.info(`Alerted for token: ${token.name} (${token.symbol})`);
+        await prisma.tokenAlertMemory.create({
+          data: {
+            tokenAddress: token.address,
+            eventType: alertCheck.type ?? '',
+            marketCap: token.market_cap,
+            extra: {
+              volume: token.volume_24h_usd,
+              price: token.price,
+              description: overview?.extensions?.description ?? '',
+              twitter: overview?.extensions?.twitter ?? '',
+            },
+          },
+        });
+        debug.info(
+          `Alerted for token: ${token.name} (${token.symbol}) - ${alertCheck.type}`,
+        );
         alertedTokens++;
       } catch (err) {
         debug.error(
