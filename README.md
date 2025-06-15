@@ -29,6 +29,21 @@ curl -X POST https://admin.singularitylabs.co/api/maix/set-webhook
 curl -X GET https://admin.singularitylabs.co/api/maix/broadcast
 curl -X GET https://2d31-2601-646-300-5e0-e8c2-57a8-8edd-a354.ngrok-free.app/api/maix/broadcast
 
+# Infrastructure
+
+## Design Objectives
+
+- We want to poll to see any new tokens that are being added and start tracking them
+- We want to be able to detect scammy tokens from real ones before we even track them
+- We want to be able to detect any surge in prices and demand
+- We want to know the creation date of tokens as we are more interested in recently created tokens
+- We want to track real-time prices of select tokens and monitor metrics over time
+- We want to able to easily add and remove from the tracking token list
+- When we are tracking tokens, we care about marketcap primarily but we might care about holder data or liquidity change
+- When we are tracking tokens, we want to categorize them in various buckets. Long-term tracking we would care about metric changes over the longer time horizon say 1 month, but for short term holding we would care about price movements in the last 3 days or so.
+- When tracking, we also want to be able to do forecasting so we can predict where trends might be going.
+- We want to track only Solana tokens
+
 # Telegram Bot
 
 ## Commands

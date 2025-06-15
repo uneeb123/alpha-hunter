@@ -6,3 +6,4 @@
 - All secrets are managed in src/utils/secrets.ts, don't use environment variables directly
 - For logging, use the Debugger found in utils folder instead of console.log
 - Type definitions should go in src/types/ folder
+- The documentation for Birdeye can be found in Birdeye.md. We are currently on starter plan.
