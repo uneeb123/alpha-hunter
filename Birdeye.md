@@ -101,7 +101,7 @@ Fetches lists of tokens.
 ```shell
 curl --request GET \
      --url 'https://public-api.birdeye.so/defi/tokenlist?sort_by=v24hUSD&sort_type=desc&offset=0&limit=50&min_liquidity=100' \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -198,7 +198,7 @@ Retrieve a list of tokens on a specified chain. Maximum of 100 tokens per call.
 ```shell
 curl --request GET \
      --url 'https://public-api.birdeye.so/defi/v3/token/list?sort_by=liquidity&sort_type=desc&offset=0&limit=100' \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -279,7 +279,7 @@ Retrieve stats of a specified token.
 ```shell
 curl --request GET \
      --url https://public-api.birdeye.so/defi/token_overview \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -575,7 +575,7 @@ Retrieve a list of newly listed tokens.
 ```shell
 curl --request GET \
      --url 'https://public-api.birdeye.so/defi/v2/tokens/new_listing?limit=10&meme_platform_enabled=false' \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -634,7 +634,7 @@ Retrieve a list of markets for a specified token.
 ```shell
 curl --request GET \
      --url 'https://public-api.birdeye.so/defi/v2/markets?time_frame=24h&sort_type=desc&sort_by=volume24h&offset=0&limit=10' \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -694,7 +694,7 @@ Retrieve security information of a specified token.
 ```shell
 curl --request GET \
      --url https://public-api.birdeye.so/defi/token_security \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -761,7 +761,7 @@ Retrieve the creation transaction information of a specified token
 ```shell
 curl --request GET \
      --url https://public-api.birdeye.so/defi/token_creation_info \
-     --header 'X-API-KEY: 2ce5540b1cde4bc7b14befc186d2ee6d' \
+     --header 'X-API-KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
      --header 'accept: application/json' \
      --header 'x-chain: solana'
 ```
@@ -782,5 +782,3 @@ curl --request GET \
   }
 }
 ```
-
-# Codex
